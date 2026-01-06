@@ -104,6 +104,7 @@ def calculate_party(party, damage_buff, stone_crit_buff):
 # ============================
 st.set_page_config(page_title="파티 딜 계산기", page_icon="🧮")
 st.title("🧮 파티 기대 딜 계산기")
+st.caption("입력 예: 비트 3 레판 1  |  이름과 수량을 공백으로 구분")
 
 tab1, tab2 = st.tabs(["단일 파티 계산", "파티 여러 개 비교"])
 
@@ -111,6 +112,10 @@ tab1, tab2 = st.tabs(["단일 파티 계산", "파티 여러 개 비교"])
 # ============================
 # 탭 1: 단일 파티
 # ============================
+
+with st.expander("사용 가능한 캐릭터", expanded=False):
+    st.write(", ".join(CHARACTER_DB.keys()))
+
 with tab1:
     party_text = st.text_input("파티 구성", value="비트 1 레판 4")
 
