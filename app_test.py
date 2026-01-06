@@ -199,7 +199,7 @@ with tab1:
         st.markdown("#### 약점 색별 조건부 피해증가율(%) 입력")
         for wc in weakness_colors:
             pct = st.number_input(
-                f"{wc} 약점 조건부 피해증가율(%)",
+                f"{wc} 특정 색깔의 피해증감율(%)",
                 min_value=-300.0, max_value=300.0, value=0.0, step=1.0,
                 key=f"weak_{wc}"
             )
@@ -208,7 +208,7 @@ with tab1:
     col1, col2 = st.columns(2)
     with col1:
         common_damage_buff_pct = st.number_input(
-            "공통 피해증가율(%) (전원 적용)",
+            "공통 피해증가율(%) (ex : 유틸버프, 쿠키가주는피해량증가)",
             min_value=0.0, max_value=1000.0, value=67.0, step=1.0
         )
     with col2:
@@ -292,10 +292,10 @@ with tab2:
 
     weakness_bonus_by_color_cmp: Dict[str, float] = {}
     if weakness_colors_cmp:
-        st.markdown("#### (비교) 약점 색별 조건부 피해증가율(%) 입력 (음수 가능)")
+        st.markdown("#### (비교) 약점 색별 조건부 피해증가율(%) 입력")
         for wc in weakness_colors_cmp:
             pct = st.number_input(
-                f"(비교) {wc} 약점 조건부 피해증가율(%)",
+                f"(비교) {wc} 특정 색깔의 피해량 증감율(%)",
                 min_value=-300.0, max_value=300.0, value=0.0, step=1.0,
                 key=f"cmp_weak_{wc}"
             )
@@ -304,7 +304,7 @@ with tab2:
     col1, col2 = st.columns(2)
     with col1:
         common_damage_buff_pct_cmp = st.number_input(
-            "공통 피해증가율(%) (비교 기준)",
+            "공통 피해증가율(%) (ex : 유틸버프, 쿠주피)",
             min_value=0.0, max_value=1000.0, value=67.0, step=1.0,
             key="cmp_common"
         )
