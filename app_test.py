@@ -245,7 +245,7 @@ with tab1:
             st.write(f"- 레판 치명타 추가딜: **{lepain_buff*100:.2f}%** (최대 1회)")
 
             st.metric("스킬 1회 사용시 총 딜량(1사이클)", f"{total_dmg:,.0f}")
-            st.metric("총 스킬에너지당 딜량 (Σ(각 딜/각 MP))", f"{total_dmg_per_mp_sum:,.2f}")
+            st.metric("총 스킬에너지당 딜량 (Σ(각 딜/각 스킬에너지))", f"{total_dmg_per_mp_sum:,.2f}")
 
             st.caption("캐릭터별 합산(참고)")
             rows = []
@@ -255,7 +255,7 @@ with tab1:
                     "수량": int(v["count"]),
                     "총딜(기대값)": int(round(v["damage"])),
                     "총스킬에너지": int(v["mp"]),
-                    "합산(각 딜/각 MP)": float(f"{v['dmg_per_mp_sum']:.2f}")
+                    "합산(각 딜/각 스킬에너지)": float(f"{v['dmg_per_mp_sum']:.2f}")
                 })
             st.dataframe(rows, use_container_width=True)
 
