@@ -115,7 +115,7 @@ tab1, tab2 = st.tabs(["단일 파티 계산", "파티 여러 개 비교"])
 
 with tab1:
     with st.expander("사용 가능한 캐릭터", expanded=False):
-    st.write(", ".join(CHARACTER_DB.keys()))
+        st.write(", ".join(CHARACTER_DB.keys()))
     
     party_text = st.text_input("파티 구성", value="비트 1 레판 4")
 
