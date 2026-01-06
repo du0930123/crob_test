@@ -172,13 +172,13 @@ with tab2:
     col1, col2 = st.columns(2)
     with col1:
         damage_buff_pct = st.number_input(
-            "총 피해증가율 합 (%) ",
+            "돌옵션의 딜량증가율 + 약점(해당될 경우 +30%) + 석류 딜버프 증가율(해당될 경우 +30%) (%) ",
             min_value=0.0, max_value=1000.0, value=0.0,
             key="cmp_dmg"
         )
     with col2:
         stone_crit_buff_pct = st.number_input(
-            "치명타 피해 증가율 (%) ",
+            "돌옵션 중 치명타 피해 증가율 (%) ",
             min_value=0.0, max_value=1000.0, value=25.0,
             key="cmp_crit"
         )
@@ -208,10 +208,10 @@ with tab2:
 
                 rows.append({
                     "파티 구성": line,
-                    "1사이클 총 딜량": int(dmg),
-                    "MP당 딜량": round(eff, 2),
+                    "스킬 1회 사용시 총 딜량 (1사이클)": int(dmg),
+                    "스킬에너지당 딜량": round(eff, 2),
                     "필요 사이클 수": cycles,
-                    "총 MP 소모": cycles * mp,
+                    "총 스킬에너지 소모": cycles * mp,
                 })
 
             except Exception as e:
