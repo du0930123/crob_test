@@ -159,6 +159,7 @@ with tab1:
             if use_boss_hp:
                 cycles = math.ceil(boss_hp / dmg)
                 st.write(f"- 필요 파티 사이클: **{cycles} 회**")
+                st.caption(f"※ 다같이 스킬을 1번씩 사용하는 파티 사이클을 {cycles}회 반복해야 보스를 처치할 수 있다는 의미")
                 st.write(f"- 예상 총 스킬에너지 소모: **{cycles * mp:,}**")
 
         except Exception as e:
