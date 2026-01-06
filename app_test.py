@@ -102,8 +102,8 @@ def calculate_party(party, damage_buff, stone_crit_buff):
 # ============================
 # Streamlit UI
 # ============================
-st.set_page_config(page_title="파티 딜 계산기", page_icon="🧮")
-st.title("🧮 파티 기대 딜 계산기")
+st.set_page_config(page_title="CROB 파티 딜 계산기", page_icon="🧮")
+st.title("🧮 쿠오븐 레이드파티 기대 딜량 계산기")
 st.caption("입력 예: 비트 3 레판 1  |  이름과 수량을 공백으로 구분")
 
 tab1, tab2 = st.tabs(["단일 파티 계산", "파티 여러 개 비교"])
