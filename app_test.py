@@ -196,7 +196,7 @@ with tab1:
 
     weakness_bonus_by_color: Dict[str, float] = {}
     if weakness_colors:
-        st.markdown("#### 약점 색별 조건부 피해증가율(%) 입력 (음수 가능)")
+        st.markdown("#### 약점 색별 조건부 피해증가율(%) 입력")
         for wc in weakness_colors:
             pct = st.number_input(
                 f"{wc} 약점 조건부 피해증가율(%)",
