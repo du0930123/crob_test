@@ -199,7 +199,7 @@ with tab1:
         st.markdown("#### 약점 색별 조건부 피해증가율(%) 입력")
         for wc in weakness_colors:
             pct = st.number_input(
-                f"{wc} 특정 색깔의 피해증감율(%)",
+                f"{wc} 색깔만의 피해증감율(%)",
                 min_value=-300.0, max_value=300.0, value=0.0, step=1.0,
                 key=f"weak_{wc}"
             )
@@ -295,7 +295,7 @@ with tab2:
         st.markdown("#### (비교) 약점 색별 조건부 피해증가율(%) 입력")
         for wc in weakness_colors_cmp:
             pct = st.number_input(
-                f"(비교) {wc} 특정 색깔의 피해량 증감율(%)",
+                f"(비교) {wc} 색깔만의 피해량 증감율(%)",
                 min_value=-300.0, max_value=300.0, value=0.0, step=1.0,
                 key=f"cmp_weak_{wc}"
             )
