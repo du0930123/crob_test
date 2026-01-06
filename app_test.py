@@ -199,7 +199,7 @@ with tab1:
         st.markdown("#### 약점 색별 조건부 피해증가율(%) 입력")
         for wc in weakness_colors:
             pct = st.number_input(
-                f"{wc} 색깔만의 피해증감율(%)",
+                f"돌 옵션 : {wc} 색깔만의 피해증감율(%)",
                 min_value=-300.0, max_value=300.0, value=0.0, step=1.0,
                 key=f"weak_{wc}"
             )
@@ -213,7 +213,7 @@ with tab1:
         )
     with col2:
         stone_crit_buff_pct = st.number_input(
-            "돌옵션 중 치명타 피해 증가율(%)",
+            "돌옵션 : 치명타 피해 증가율(%)",
             min_value=0.0, max_value=1000.0, value=67.0, step=1.0
         )
 
@@ -295,7 +295,7 @@ with tab2:
         st.markdown("#### (비교) 약점 색별 조건부 피해증가율(%) 입력")
         for wc in weakness_colors_cmp:
             pct = st.number_input(
-                f"(비교) {wc} 색깔만의 피해량 증감율(%)",
+                f"돌옵션 : {wc} 색깔만의 피해량 증감율(%)",
                 min_value=-300.0, max_value=300.0, value=0.0, step=1.0,
                 key=f"cmp_weak_{wc}"
             )
@@ -310,7 +310,7 @@ with tab2:
         )
     with col2:
         stone_crit_buff_pct_cmp = st.number_input(
-            "돌옵션 중 치명타 피해 증가율(%) (비교 기준)",
+            "돌옵션 : 치명타 피해 증가율(%)",
             min_value=0.0, max_value=1000.0, value=67.0, step=1.0,
             key="cmp_crit"
         )
