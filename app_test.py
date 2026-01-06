@@ -146,13 +146,13 @@ with tab1:
                 stone_crit_buff_pct / 100
             )
 
-            st.metric("총 딜량 (1사이클)", f"{dmg:,.0f}")
-            st.metric("MP당 딜량", f"{eff:,.2f}")
+            st.metric("스킬 1회 사용시 총 딜량(1사이클)", f"{dmg:,.0f}")
+            st.metric("스킬에너지당 딜량", f"{eff:,.2f}")
 
             if use_boss_hp:
                 cycles = math.ceil(boss_hp / dmg)
                 st.write(f"- 필요 파티 사이클: **{cycles} 회**")
-                st.write(f"- 예상 총 MP 소모: **{cycles * mp:,}**")
+                st.write(f"- 예상 총 스킬에너지 소모: **{cycles * mp:,}**")
 
         except Exception as e:
             st.error(str(e))
