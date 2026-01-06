@@ -117,12 +117,12 @@ with tab1:
     col1, col2 = st.columns(2)
     with col1:
         damage_buff_pct = st.number_input(
-            "총 피해증가율 합 (%)",
+            "돌옵션의 딜량증가율 + 약점(해당될 경우 +30%) + 석류 딜버프 증가율 (해당될 경우 +30%) (%)",
             min_value=0.0, max_value=1000.0, value=0.0
         )
     with col2:
         stone_crit_buff_pct = st.number_input(
-            "치명타 피해 증가율 (%)",
+            "돌옵션 중 치명타 피해 증가율 (%)",
             min_value=0.0, max_value=1000.0, value=25.0
         )
 
