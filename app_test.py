@@ -114,6 +114,7 @@ def calculate_party(
     common_damage_buff: float,
     stone_crit_buff: float,
     weakness_bonus_by_color: Dict[str, float],
+    energy_decrease_by_color: Dict[str, float],  # ✅ 추가: 색별 에너지 획득량 감소(%) -> mp_cost * (1 + x)
 ):
     # ✅ 중첩 금지: 각각 1회만 적용 (최대값 1개만)
     party_damage_buff_total = max((c.party_damage_buff for c in party), default=0.0)
@@ -138,17 +139,22 @@ def calculate_party(
             weakness_bonus_by_color=weakness_bonus_by_color
         )
 
-        total_damage += dmg
-        total_mp += c.mp_cost
+        # ✅ 추가: "색깔만의 에너지획득량감소"가 있으면 해당 색 스킬 MP 요구량 증가
+        #    예: 30% 감소 -> mp_cost * 1.3
+        mp_mult = 1.0 + energy_decrease_by_color.get(c.color, 0.0)
+        effective_mp = int(math.ceil(c.mp_cost * mp_mult)) if c.mp_cost > 0 else 0
 
-        dmg_per_mp = (dmg / c.mp_cost) if c.mp_cost > 0 else 0.0
+        total_damage += dmg
+        total_mp += effective_mp
+
+        dmg_per_mp = (dmg / effective_mp) if effective_mp > 0 else 0.0
         total_dmg_per_mp_sum += dmg_per_mp
 
         if c.name not in detail:
             detail[c.name] = {"count": 0, "damage": 0.0, "mp": 0.0, "dmg_per_mp_sum": 0.0}
         detail[c.name]["count"] += 1
         detail[c.name]["damage"] += dmg
-        detail[c.name]["mp"] += c.mp_cost
+        detail[c.name]["mp"] += effective_mp
         detail[c.name]["dmg_per_mp_sum"] += dmg_per_mp
 
     return (
@@ -195,6 +201,8 @@ with tab1:
         weakness_colors = weakness_colors[:2]
 
     weakness_bonus_by_color: Dict[str, float] = {}
+    energy_decrease_by_color: Dict[str, float] = {}  # ✅ 추가: 색별 에너지획득량감소(%) 입력값(0~)
+
     if weakness_colors:
         st.markdown("#### 약점 색별 조건부 피해증가율(%) 입력")
         for wc in weakness_colors:
@@ -204,6 +212,16 @@ with tab1:
                 key=f"weak_{wc}"
             )
             weakness_bonus_by_color[wc] = pct / 100.0
+
+            # ✅ 추가: 피해증감율 입력 밑에 에너지 획득량 감소 옵션
+            energy_on = st.checkbox(f"{wc}색깔만의 에너지획득량감소", key=f"energy_on_{wc}")
+            if energy_on:
+                e_pct = st.number_input(
+                    f"{wc}색 에너지 획득량 감소(%)",
+                    min_value=0.0, max_value=300.0, value=0.0, step=1.0,
+                    key=f"energy_pct_{wc}"
+                )
+                energy_decrease_by_color[wc] = e_pct / 100.0
 
     col1, col2 = st.columns(2)
     with col1:
@@ -249,7 +267,8 @@ with tab1:
                 party=party,
                 common_damage_buff=common_damage_buff_pct / 100.0,
                 stone_crit_buff=stone_crit_buff_pct / 100.0,
-                weakness_bonus_by_color=weakness_bonus_by_color
+                weakness_bonus_by_color=weakness_bonus_by_color,
+                energy_decrease_by_color=energy_decrease_by_color,  # ✅ 추가
             )
 
             st.subheader("적용 요약")
@@ -258,6 +277,12 @@ with tab1:
                 st.write(f"- 약점 적용: **{pretty}**")
             else:
                 st.write("- 약점 적용: **없음**")
+
+            if energy_decrease_by_color:
+                epretty = ", ".join([f"{k}({v*100:.0f}%)" for k, v in energy_decrease_by_color.items()])
+                st.write(f"- 에너지획득량감소(색별): **{epretty}**")
+            else:
+                st.write("- 에너지획득량감소(색별): **없음**")
 
             st.write(f"- 공통 피해증가율: **{common_damage_buff_pct:.0f}%** (전원 적용)")
             st.write(f"- 캡틴아이스 피해증가: **{party_buff*100:.2f}%** (최대 1회)")
@@ -317,6 +342,8 @@ with tab2:
         weakness_colors_cmp = weakness_colors_cmp[:2]
 
     weakness_bonus_by_color_cmp: Dict[str, float] = {}
+    energy_decrease_by_color_cmp: Dict[str, float] = {}  # ✅ 추가
+
     if weakness_colors_cmp:
         st.markdown("#### (비교) 약점 색별 조건부 피해증가율(%) 입력")
         for wc in weakness_colors_cmp:
@@ -326,6 +353,16 @@ with tab2:
                 key=f"cmp_weak_{wc}"
             )
             weakness_bonus_by_color_cmp[wc] = pct / 100.0
+
+            # ✅ 추가: 비교 탭에도 에너지 획득량 감소 옵션
+            energy_on = st.checkbox(f"(비교) {wc}색깔만의 에너지획득량감소", key=f"cmp_energy_on_{wc}")
+            if energy_on:
+                e_pct = st.number_input(
+                    f"(비교) {wc}색 에너지 획득량 감소(%)",
+                    min_value=0.0, max_value=300.0, value=0.0, step=1.0,
+                    key=f"cmp_energy_pct_{wc}"
+                )
+                energy_decrease_by_color_cmp[wc] = e_pct / 100.0
 
     col1, col2 = st.columns(2)
     with col1:
@@ -377,7 +414,8 @@ with tab2:
                     party=party,
                     common_damage_buff=common_damage_buff_pct_cmp / 100.0,
                     stone_crit_buff=stone_crit_buff_pct_cmp / 100.0,
-                    weakness_bonus_by_color=weakness_bonus_by_color_cmp
+                    weakness_bonus_by_color=weakness_bonus_by_color_cmp,
+                    energy_decrease_by_color=energy_decrease_by_color_cmp,  # ✅ 추가
                 )
 
                 # ✅ 요청 반영: 비교 기준 보스체력에 (1+보스체력증가) * (파티원5명?면*5) 적용
