@@ -139,12 +139,12 @@ def calculate_party(
             weakness_bonus_by_color=weakness_bonus_by_color
         )
 
+        total_damage += dmg
+
         # ✅ 추가: "색깔만의 에너지획득량감소"가 있으면 해당 색 스킬 MP 요구량 증가
-        #    예: 30% 감소 -> mp_cost * 1.3
         mp_mult = 1.0 + energy_decrease_by_color.get(c.color, 0.0)
         effective_mp = int(math.ceil(c.mp_cost * mp_mult)) if c.mp_cost > 0 else 0
 
-        total_damage += dmg
         total_mp += effective_mp
 
         dmg_per_mp = (dmg / effective_mp) if effective_mp > 0 else 0.0
@@ -165,6 +165,31 @@ def calculate_party(
         lepain_crit_buff_total,
         detail
     )
+
+
+# ============================
+# ✅ 추가: 병목 기반 딜 감소율(dps_ratio) 계산
+# ============================
+def compute_bottleneck_dps_ratio(
+    party: List[Character],
+    energy_decrease_by_color: Dict[str, float],
+) -> float:
+    # 병목 = 파티 내 "스킬 1회 요구 MP"가 가장 큰 값
+    base_bottleneck = max((c.mp_cost for c in party), default=0)
+
+    eff_bottleneck = 0
+    for c in party:
+        mp_mult = 1.0 + energy_decrease_by_color.get(c.color, 0.0)
+        eff_mp = int(math.ceil(c.mp_cost * mp_mult)) if c.mp_cost > 0 else 0
+        if eff_mp > eff_bottleneck:
+            eff_bottleneck = eff_mp
+
+    if base_bottleneck <= 0 or eff_bottleneck <= 0:
+        return 1.0
+
+    # dps_ratio = (에너지감소 없음 대비) 딜 비율
+    # 병목 기반에서는 "시간 비율"이 eff/base 이고, 딜(DPS) 비율은 그 역수
+    return base_bottleneck / eff_bottleneck
 
 
 # ============================
@@ -201,7 +226,7 @@ with tab1:
         weakness_colors = weakness_colors[:2]
 
     weakness_bonus_by_color: Dict[str, float] = {}
-    energy_decrease_by_color: Dict[str, float] = {}  # ✅ 추가: 색별 에너지획득량감소(%) 입력값(0~)
+    energy_decrease_by_color: Dict[str, float] = {}
 
     if weakness_colors:
         st.markdown("#### 약점 색별 조건부 피해증가율(%) 입력")
@@ -213,7 +238,7 @@ with tab1:
             )
             weakness_bonus_by_color[wc] = pct / 100.0
 
-            # ✅ 추가: 피해증감율 입력 밑에 에너지 획득량 감소 옵션
+            # ✅ 피해증감율 입력 밑에 에너지 획득량 감소 옵션
             energy_on = st.checkbox(f"{wc}색깔만의 에너지획득량감소", key=f"energy_on_{wc}")
             if energy_on:
                 e_pct = st.number_input(
@@ -238,7 +263,6 @@ with tab1:
     use_boss_hp = st.checkbox("보스 체력 기준 계산")
     boss_hp = None
 
-    # ✅ 추가 옵션(요청 반영): 보스 체력 증가 / 파티원이 5명?(*5)
     boss_hp_inc_on = False
     boss_hp_inc_pct = 0.0
     party5_on = False
@@ -268,8 +292,12 @@ with tab1:
                 common_damage_buff=common_damage_buff_pct / 100.0,
                 stone_crit_buff=stone_crit_buff_pct / 100.0,
                 weakness_bonus_by_color=weakness_bonus_by_color,
-                energy_decrease_by_color=energy_decrease_by_color,  # ✅ 추가
+                energy_decrease_by_color=energy_decrease_by_color,
             )
+
+            # ✅ 추가: 병목 기반 딜 비율/감소율
+            dps_ratio = compute_bottleneck_dps_ratio(party, energy_decrease_by_color)
+            dps_drop_pct = (1.0 - dps_ratio) * 100.0
 
             st.subheader("적용 요약")
             if weakness_bonus_by_color:
@@ -283,6 +311,9 @@ with tab1:
                 st.write(f"- 에너지획득량감소(색별): **{epretty}**")
             else:
                 st.write("- 에너지획득량감소(색별): **없음**")
+
+            # ✅ 추가 출력(딜 감소율)
+            st.write(f"- (병목기반) 딜량 감소율: **{dps_drop_pct:.2f}%**")
 
             st.write(f"- 공통 피해증가율: **{common_damage_buff_pct:.0f}%** (전원 적용)")
             st.write(f"- 캡틴아이스 피해증가: **{party_buff*100:.2f}%** (최대 1회)")
@@ -304,17 +335,25 @@ with tab1:
             st.dataframe(rows, use_container_width=True)
 
             if use_boss_hp:
-                # ✅ 요청 반영: 입력 보스체력에 (1+보스체력증가) * (파티원5명?면*5) 적용
                 effective_boss_hp = boss_hp if boss_hp is not None else 0.0
                 if boss_hp_inc_on:
                     effective_boss_hp *= (1.0 + boss_hp_inc_pct / 100.0)
                 if party5_on:
                     effective_boss_hp *= 5.0
 
+                # ✅ 기존(에너지 미반영) 사이클
                 cycles = math.ceil(effective_boss_hp / total_dmg) if total_dmg > 0 else 0
+
+                # ✅ 추가: (병목기반 딜 감소율 반영) 사이클
+                effective_total_dmg = total_dmg * dps_ratio
+                cycles_with_energy = math.ceil(effective_boss_hp / effective_total_dmg) if effective_total_dmg > 0 else 0
+
                 st.write(f"- 필요 파티 사이클: **{cycles} 회**")
-                st.caption(f"※ 다같이 스킬을 1번씩 사용하는 파티 사이클을 {cycles}회 반복해야 보스를 처치할 수 있다는 의미")
+                st.write(f"- (에너지감소 반영) 필요 파티 사이클: **{cycles_with_energy} 회**")
+                st.caption("※ 병목기반 딜량 감소율을 '시간당 딜 감소'로 보고, 보스 처치에 필요한 사이클을 재산정한 값")
+
                 st.write(f"- 예상 총 스킬에너지 소모: **{cycles * total_mp:,}**")
+                st.write(f"- (에너지감소 반영) 예상 총 스킬에너지 소모: **{cycles_with_energy * total_mp:,}**")
 
         except Exception as e:
             st.error(str(e))
@@ -342,7 +381,7 @@ with tab2:
         weakness_colors_cmp = weakness_colors_cmp[:2]
 
     weakness_bonus_by_color_cmp: Dict[str, float] = {}
-    energy_decrease_by_color_cmp: Dict[str, float] = {}  # ✅ 추가
+    energy_decrease_by_color_cmp: Dict[str, float] = {}
 
     if weakness_colors_cmp:
         st.markdown("#### (비교) 약점 색별 조건부 피해증가율(%) 입력")
@@ -354,7 +393,6 @@ with tab2:
             )
             weakness_bonus_by_color_cmp[wc] = pct / 100.0
 
-            # ✅ 추가: 비교 탭에도 에너지 획득량 감소 옵션
             energy_on = st.checkbox(f"(비교) {wc}색깔만의 에너지획득량감소", key=f"cmp_energy_on_{wc}")
             if energy_on:
                 e_pct = st.number_input(
@@ -387,7 +425,6 @@ with tab2:
         key="cmp_hp"
     )
 
-    # ✅ 추가 옵션(요청 반영): 보스 체력 증가 / 파티원이 5명?(*5)
     col_c, col_d = st.columns(2)
     with col_c:
         boss_hp_inc_on_cmp = st.checkbox("보스 체력 증가 옵션", key="boss_hp_inc_on_cmp")
@@ -415,10 +452,12 @@ with tab2:
                     common_damage_buff=common_damage_buff_pct_cmp / 100.0,
                     stone_crit_buff=stone_crit_buff_pct_cmp / 100.0,
                     weakness_bonus_by_color=weakness_bonus_by_color_cmp,
-                    energy_decrease_by_color=energy_decrease_by_color_cmp,  # ✅ 추가
+                    energy_decrease_by_color=energy_decrease_by_color_cmp,
                 )
 
-                # ✅ 요청 반영: 비교 기준 보스체력에 (1+보스체력증가) * (파티원5명?면*5) 적용
+                dps_ratio = compute_bottleneck_dps_ratio(party, energy_decrease_by_color_cmp)
+                dps_drop_pct = (1.0 - dps_ratio) * 100.0
+
                 effective_boss_hp_cmp = boss_hp_cmp
                 if boss_hp_inc_on_cmp:
                     effective_boss_hp_cmp *= (1.0 + boss_hp_inc_pct_cmp / 100.0)
@@ -426,15 +465,20 @@ with tab2:
                     effective_boss_hp_cmp *= 5.0
 
                 cycles = math.ceil(effective_boss_hp_cmp / total_dmg) if total_dmg > 0 else 0
+                effective_total_dmg = total_dmg * dps_ratio
+                cycles_with_energy = math.ceil(effective_boss_hp_cmp / effective_total_dmg) if effective_total_dmg > 0 else 0
 
                 rows.append({
                     "파티 구성": line,
                     "약점 적용": ", ".join([f"{k}(+30%+{v*100:+.0f}%)" for k, v in weakness_bonus_by_color_cmp.items()]) or "-",
+                    "에너지감소(병목) 딜감소율%": float(f"{dps_drop_pct:.2f}"),
                     "1사이클 총 딜량": int(total_dmg),
                     "총 스킬에너지당 딜량(Σ)": float(f"{total_dmg_per_mp_sum:.2f}"),
                     "필요 사이클 수": cycles,
+                    "(에너지감소 반영) 필요 사이클 수": cycles_with_energy,
                     "총 스킬에너지 소모(1사이클)": int(total_mp),
                     "총 스킬에너지 소모(처치)": int(cycles * total_mp),
+                    "(에너지감소 반영) 총 스킬에너지 소모(처치)": int(cycles_with_energy * total_mp),
                 })
 
             except Exception as e:
