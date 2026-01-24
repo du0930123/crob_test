@@ -219,8 +219,27 @@ with tab1:
 
     use_boss_hp = st.checkbox("보스 체력 기준 계산")
     boss_hp = None
+
+    # ✅ 추가 옵션(요청 반영): 보스 체력 증가 / 파티원이 5명?(*5)
+    boss_hp_inc_on = False
+    boss_hp_inc_pct = 0.0
+    party5_on = False
+
     if use_boss_hp:
         boss_hp = st.number_input("보스 체력", min_value=1.0, value=100_000_000.0, step=1_000_000.0, format="%.0f")
+
+        col_a, col_b = st.columns(2)
+        with col_a:
+            boss_hp_inc_on = st.checkbox("보스 체력 증가 옵션", key="boss_hp_inc_on")
+        with col_b:
+            party5_on = st.checkbox("파티원이 5명? (*5)", key="party5_on")
+
+        if boss_hp_inc_on:
+            boss_hp_inc_pct = st.number_input(
+                "보스 체력 증가(%)",
+                min_value=0.0, max_value=1000.0, value=0.0, step=1.0,
+                key="boss_hp_inc_pct"
+            )
 
     if st.button("단일 파티 계산"):
         try:
@@ -260,7 +279,14 @@ with tab1:
             st.dataframe(rows, use_container_width=True)
 
             if use_boss_hp:
-                cycles = math.ceil(boss_hp / total_dmg) if total_dmg > 0 else 0
+                # ✅ 요청 반영: 입력 보스체력에 (1+보스체력증가) * (파티원5명?면*5) 적용
+                effective_boss_hp = boss_hp if boss_hp is not None else 0.0
+                if boss_hp_inc_on:
+                    effective_boss_hp *= (1.0 + boss_hp_inc_pct / 100.0)
+                if party5_on:
+                    effective_boss_hp *= 5.0
+
+                cycles = math.ceil(effective_boss_hp / total_dmg) if total_dmg > 0 else 0
                 st.write(f"- 필요 파티 사이클: **{cycles} 회**")
                 st.caption(f"※ 다같이 스킬을 1번씩 사용하는 파티 사이클을 {cycles}회 반복해야 보스를 처치할 수 있다는 의미")
                 st.write(f"- 예상 총 스킬에너지 소모: **{cycles * total_mp:,}**")
@@ -324,6 +350,21 @@ with tab2:
         key="cmp_hp"
     )
 
+    # ✅ 추가 옵션(요청 반영): 보스 체력 증가 / 파티원이 5명?(*5)
+    col_c, col_d = st.columns(2)
+    with col_c:
+        boss_hp_inc_on_cmp = st.checkbox("보스 체력 증가 옵션", key="boss_hp_inc_on_cmp")
+    with col_d:
+        party5_on_cmp = st.checkbox("파티원이 5명? (*5)", key="party5_on_cmp")
+
+    boss_hp_inc_pct_cmp = 0.0
+    if boss_hp_inc_on_cmp:
+        boss_hp_inc_pct_cmp = st.number_input(
+            "보스 체력 증가(%)",
+            min_value=0.0, max_value=1000.0, value=0.0, step=1.0,
+            key="boss_hp_inc_pct_cmp"
+        )
+
     if st.button("파티 비교 실행"):
         rows = []
         for line in party_texts.splitlines():
@@ -339,7 +380,14 @@ with tab2:
                     weakness_bonus_by_color=weakness_bonus_by_color_cmp
                 )
 
-                cycles = math.ceil(boss_hp_cmp / total_dmg) if total_dmg > 0 else 0
+                # ✅ 요청 반영: 비교 기준 보스체력에 (1+보스체력증가) * (파티원5명?면*5) 적용
+                effective_boss_hp_cmp = boss_hp_cmp
+                if boss_hp_inc_on_cmp:
+                    effective_boss_hp_cmp *= (1.0 + boss_hp_inc_pct_cmp / 100.0)
+                if party5_on_cmp:
+                    effective_boss_hp_cmp *= 5.0
+
+                cycles = math.ceil(effective_boss_hp_cmp / total_dmg) if total_dmg > 0 else 0
 
                 rows.append({
                     "파티 구성": line,
@@ -358,4 +406,4 @@ with tab2:
 
 st.markdown("---")
 st.caption("제작 : 카카오톡 오픈채팅방 쿠키런 only 레이드런방 - 오늘컨별로네")
-st.caption("도움 : Nawg, 썸머, 솜이, 흑임자맛고양이")
+st.caption("도움 : Nawg, 썸머, 솜이, 흑임자맛고양이, 감성적인방향치")
