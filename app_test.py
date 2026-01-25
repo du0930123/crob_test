@@ -269,12 +269,12 @@ with tab1:
     with col1:
         common_damage_buff_pct = st.number_input(
             "공통 피해증가율(%) (ex : 유틸버프, 쿠키가주는피해량증가)",
-            min_value=0.0, max_value=1000.0, value=67.0, step=1.0
+            min_value=0.0, max_value=1000.0, value=42.0, step=1.0
         )
     with col2:
         stone_crit_buff_pct = st.number_input(
             "돌옵션 : 치명타 피해 증가율(%)",
-            min_value=0.0, max_value=1000.0, value=67.0, step=1.0
+            min_value=0.0, max_value=1000.0, value=0.0, step=1.0
         )
 
     use_boss_hp = st.checkbox("보스 체력 기준 계산")
@@ -285,13 +285,13 @@ with tab1:
     party5_on = False
 
     if use_boss_hp:
-        boss_hp = st.number_input("보스 체력", min_value=1.0, value=100_000_000.0, step=1_000_000.0, format="%.0f")
+        boss_hp = st.number_input("보스 체력", min_value=1.0, value=1.0, step=1_000_000.0, format="%.0f")
 
         col_a, col_b = st.columns(2)
         with col_a:
             boss_hp_inc_on = st.checkbox("보스 체력 증가 옵션", key="boss_hp_inc_on")
         with col_b:
-            party5_on = st.checkbox("파티원이 5명? (*5)", key="party5_on")
+            party5_on = st.checkbox("파티원이 5명? (입력된 보스체력*5 해주는 옵션임)", key="party5_on")
 
         if boss_hp_inc_on:
             boss_hp_inc_pct = st.number_input(
@@ -372,11 +372,11 @@ with tab1:
                 cycles_with_energy_async = math.ceil(effective_boss_hp / effective_total_dmg_async) if effective_total_dmg_async > 0 else 0
 
                 st.write(f"- 필요 파티 사이클: **{cycles} 회**")
-                st.write(f"- (비동기합산, 에너지감소 반영) 필요 파티 사이클: **{cycles_with_energy_async} 회**")
-                st.caption("※ 비동기합산(Σ(딜/요구MP)) 기반으로 '시간당 딜 감소'를 반영해 보스 처치 사이클을 재산정한 값")
+                st.write(f"- (에너지감소 반영) 필요 파티 사이클: **{cycles_with_energy_async} 회**")
+                st.caption("※ 에너지감소 반영 (Σ(딜/요구 스킬젬량)) 기반으로 '시간당 딜 감소'를 반영해 보스 처치 사이클을 재산정한 값")
 
                 st.write(f"- 예상 총 스킬에너지 소모: **{cycles * total_mp:,}**")
-                st.write(f"- (비동기합산, 에너지감소 반영) 예상 총 스킬에너지 소모: **{cycles_with_energy_async * total_mp:,}**")
+                st.write(f"- (에너지감소 반영) 예상 총 스킬에너지 소모: **{cycles_with_energy_async * total_mp:,}**")
 
         except Exception as e:
             st.error(str(e))
@@ -429,20 +429,20 @@ with tab2:
     with col1:
         common_damage_buff_pct_cmp = st.number_input(
             "공통 피해증가율(%) (ex : 유틸버프, 쿠주피)",
-            min_value=0.0, max_value=1000.0, value=67.0, step=1.0,
+            min_value=0.0, max_value=1000.0, value=42.0, step=1.0,
             key="cmp_common"
         )
     with col2:
         stone_crit_buff_pct_cmp = st.number_input(
             "돌옵션 : 치명타 피해 증가율(%)",
-            min_value=0.0, max_value=1000.0, value=67.0, step=1.0,
+            min_value=0.0, max_value=1000.0, value=0.0, step=1.0,
             key="cmp_crit"
         )
 
     boss_hp_cmp = st.number_input(
         "보스 체력 (비교 기준)",
         min_value=1.0,
-        value=100_000_000.0,
+        value=1.0,
         step=1_000_000.0,
         format="%.0f",
         key="cmp_hp"
@@ -452,7 +452,7 @@ with tab2:
     with col_c:
         boss_hp_inc_on_cmp = st.checkbox("보스 체력 증가 옵션", key="boss_hp_inc_on_cmp")
     with col_d:
-        party5_on_cmp = st.checkbox("파티원이 5명? (*5)", key="party5_on_cmp")
+        party5_on_cmp = st.checkbox("파티원이 5명? (보스체력*5 해주는 옵션)", key="party5_on_cmp")
 
     boss_hp_inc_pct_cmp = 0.0
     if boss_hp_inc_on_cmp:
@@ -504,10 +504,10 @@ with tab2:
                     "1사이클 총 딜량": int(total_dmg),
                     "총 스킬에너지당 딜량(Σ)": float(f"{total_dmg_per_mp_sum:.2f}"),
                     "필요 사이클 수": cycles,
-                    "(비동기합산, 에너지감소 반영) 필요 사이클 수": cycles_with_energy_async,
+                    "(에너지감소 반영) 필요 사이클 수": cycles_with_energy_async,
                     "총 스킬에너지 소모(1사이클)": int(total_mp),
                     "총 스킬에너지 소모(처치)": int(cycles * total_mp),
-                    "(비동기합산, 에너지감소 반영) 총 스킬에너지 소모(처치)": int(cycles_with_energy_async * total_mp),
+                    "(에너지감소 반영) 총 스킬에너지 소모(처치)": int(cycles_with_energy_async * total_mp),
                 })
 
             except Exception as e:
