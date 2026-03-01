@@ -1,12 +1,11 @@
-
 import streamlit as st
-from typing import Dict, Tuple, Optional
+from typing import Dict, Tuple, Optional, Any, List
 
 
 # ----------------------------
 # 세션 저장소 접근
 # ----------------------------
-def get_limits_store() -> Dict:
+def get_limits_store() -> Dict[str, Any]:
     if "BOSS_LIMITS" not in st.session_state:
         st.session_state["BOSS_LIMITS"] = {}
     return st.session_state["BOSS_LIMITS"]
@@ -25,14 +24,6 @@ def compute_required_energy(boss_hp: float, P: float) -> float:
     return boss_hp / P
 
 
-def get_energy_limit(boss: str, party_type: str) -> Optional[float]:
-    store = get_limits_store()
-    pack = store.get(boss, {}).get(party_type)
-    if not pack:
-        return None
-    return float(pack.get("energy_limit", 0.0))
-
-
 def judge_clear(boss_hp: float, P: float, energy_limit: float) -> Tuple[bool, float, float]:
     """
     Returns:
@@ -49,41 +40,168 @@ def judge_clear(boss_hp: float, P: float, energy_limit: float) -> Tuple[bool, fl
     return clear_ok, required_energy, margin_pct
 
 
+# ==========================================================
+# ✅ party_type 제거 버전: 보스 전체 profiles 풀로 ENERGY_LIMIT 계산
+# - 파티 구성 -> MP 비중 벡터
+# - 각 profile(ref_vec)과의 거리(L1)로 가중치 계산
+# - ENERGY_LIMIT = Σ(w_i * limit_i) / Σ(w_i)
+# ==========================================================
+
+def party_to_mp_share_vector(party) -> Dict[str, float]:
+    """
+    party: List[Character]
+    v[name] = (해당 캐릭터 mp_cost 합) / (전체 mp_cost 합)
+    """
+    total_mp = 0.0
+    acc: Dict[str, float] = {}
+
+    for c in party:
+        name = getattr(c, "name", "")
+        mp = float(getattr(c, "mp_cost", 0) or 0)
+        if not name or mp <= 0:
+            continue
+        acc[name] = acc.get(name, 0.0) + mp
+        total_mp += mp
+
+    if total_mp <= 0:
+        return {}
+
+    return {k: v / total_mp for k, v in acc.items()}
+
+
+def l1_distance(a: Dict[str, float], b: Dict[str, float]) -> float:
+    keys = set(a.keys()) | set(b.keys())
+    return sum(abs(a.get(k, 0.0) - b.get(k, 0.0)) for k in keys)
+
+
+def _get_boss_profiles(boss: str) -> List[Dict[str, Any]]:
+    """
+    새 구조: store[boss]["profiles"] = [ {energy_limit, ref_vec, ref_party, ...}, ... ]
+    구 구조(하위호환): store[boss][party_type]["energy_limit"] 형태는 여기서 자동 사용 못함.
+      -> party_type을 없앴기 때문에, 구 구조는 마이그레이션 필요.
+    """
+    store = get_limits_store()
+    boss_pack = store.get(boss, {})
+    profs = boss_pack.get("profiles", [])
+    if isinstance(profs, list):
+        return profs
+    return []
+
+
+def compute_energy_limit_weighted(
+    boss: str,
+    party,
+    k: int = 5,
+    eps: float = 1e-6,
+    power: float = 1.0,
+) -> Tuple[Optional[float], Optional[List[Dict[str, Any]]], Optional[str]]:
+    """
+    보스의 profiles 전체에서 거리 기반 가중평균 ENERGY_LIMIT 계산
+
+    Args:
+      k: 가까운 프로필 상위 k개만 사용(너무 많은 프로필이 섞이는 걸 방지)
+      power: 가중치 강도 (1.0=기본, 2.0=가까운 것 더 강하게)
+        w_i = 1 / (d_i + eps)^power
+
+    Returns:
+      energy_limit (float or None)
+      used_profiles (list of dict with dist, weight info) or None
+      err_msg (str or None)
+    """
+    profiles = _get_boss_profiles(boss)
+    if not profiles:
+        return None, None, "선택한 보스에 저장된 profiles가 없어요(탭3 관리자 저장 필요)."
+
+    cur_vec = party_to_mp_share_vector(party)
+    if not cur_vec:
+        return None, None, "현재 파티의 MP 벡터를 만들 수 없어요(mp_cost 확인)."
+
+    scored = []
+    for p in profiles:
+        ref_vec = p.get("ref_vec", {})
+        limit = p.get("energy_limit", None)
+        if not isinstance(ref_vec, dict) or len(ref_vec) == 0:
+            continue
+        if limit is None:
+            continue
+        d = l1_distance(cur_vec, ref_vec)
+        scored.append((d, p))
+
+    if not scored:
+        return None, None, "profiles는 있는데 ref_vec/energy_limit이 유효한 항목이 없어요."
+
+    # 가까운 순 정렬 후 상위 k개만 사용
+    scored.sort(key=lambda x: x[0])
+    top = scored[: max(1, min(k, len(scored)))]
+
+    # 가중치 계산
+    weights = []
+    for d, p in top:
+        w = 1.0 / ((d + eps) ** power)
+        weights.append((w, d, p))
+
+    wsum = sum(w for w, _, _ in weights)
+    if wsum <= 0:
+        return None, None, "가중치 합이 0이에요(거리 계산 확인 필요)."
+
+    energy_limit = sum(w * float(p["energy_limit"]) for w, _, p in weights) / wsum
+
+    used = []
+    for w, d, p in weights:
+        used.append({
+            "ref_party": p.get("ref_party", ""),
+            "label": p.get("label", ""),
+            "energy_limit": float(p.get("energy_limit", 0.0)),
+            "dist": float(d),
+            "weight": float(w / wsum),  # 정규화 가중치(합 1)
+        })
+
+    return float(energy_limit), used, None
+
+
 # ----------------------------
 # ✅ 탭1/탭2에서 공통으로 쓰는 "판정 UI + 출력"
 # ----------------------------
 def render_clear_judge_box(
     boss: str,
     boss_hp: float,
-    P: float,  # total_dmg_per_mp_sum
-    party_type_options,
-    default_party_type_index: int = 0,
+    P: float,          # total_dmg_per_mp_sum
+    party,             # ✅ List[Character]
     key_prefix: str = "judge",
+    show_match_info: bool = True,
+    k_profiles: int = 5,
+    weight_power: float = 1.0,
 ):
     """
-    boss: "사마귀" 등
-    boss_hp: 최종 적용 보스 체력(증가옵/5인옵 반영 완료된 값)
-    P: total_dmg_per_mp_sum
-    party_type_options: ["빨강...", "파랑...", ...]
+    party_type 선택 없음.
+    보스 profiles 풀에서 자동으로 ENERGY_LIMIT(가중평균)을 계산.
     """
-    st.markdown("### ✅ 정규화 클리어 판정")
+    st.markdown("### ✅ 정규화 클리어 판정(가중평균, party_type 없음)")
 
-    party_type = st.selectbox(
-        "클리어 기준 파티유형(정규화 판정용)",
-        party_type_options,
-        index=default_party_type_index,
-        key=f"{key_prefix}_party_type",
+    energy_limit, used, err = compute_energy_limit_weighted(
+        boss=boss,
+        party=party,
+        k=k_profiles,
+        power=weight_power,
     )
 
-    energy_limit = get_energy_limit(boss, party_type)
-    if energy_limit is None:
-        st.info("선택한 보스/파티유형의 기준값(ENERGY_LIMIT)이 없어요. 탭3에서 먼저 저장해줘.")
+    if err or energy_limit is None:
+        st.info(err or "ENERGY_LIMIT을 계산할 수 없어요.")
         return
 
     clear_ok, required_energy, margin_pct = judge_clear(boss_hp=boss_hp, P=P, energy_limit=energy_limit)
 
     st.write(f"- 필요 총 에너지(required_energy = boss_hp / P): **{required_energy:,.0f}**")
-    st.write(f"- ENERGY_LIMIT(총 에너지 예산): **{energy_limit:,.0f}**")
+    st.write(f"- ENERGY_LIMIT(가중평균): **{energy_limit:,.0f}**")
+
+    if show_match_info and used:
+        with st.expander("가중치로 사용된 기준 프로필(상위 매칭)", expanded=False):
+            for u in used:
+                ref = u.get("ref_party", "")
+                lbl = u.get("label", "")
+                st.write(
+                    f"- [{lbl or '-'}] `{ref}` | limit={u['energy_limit']:,.0f} | dist={u['dist']:.3f} | weight={u['weight']*100:.1f}%"
+                )
 
     if clear_ok:
         st.success(f"판정: **클리어 가능** (여유율 **{margin_pct:.1f}%**)")
@@ -95,24 +213,34 @@ def judge_clear_for_table(
     boss: str,
     boss_hp: float,
     P: float,
-    party_type: str,
+    party,             # ✅ List[Character]
+    k_profiles: int = 5,
+    weight_power: float = 1.0,
 ):
     """
     탭2(비교 테이블)용: UI 없이 결과만 반환
     """
-    energy_limit = get_energy_limit(boss, party_type)
-    if energy_limit is None:
+    energy_limit, used, err = compute_energy_limit_weighted(
+        boss=boss,
+        party=party,
+        k=k_profiles,
+        power=weight_power,
+    )
+
+    required_energy = compute_required_energy(boss_hp, P)
+
+    if err or energy_limit is None:
         return {
-            "필요총에너지(boss_hp/P)": None,
-            "ENERGY_LIMIT": None,
-            "정규화판정": "NO_LIMIT",
+            "필요총에너지(boss_hp/P)": int(required_energy) if required_energy != float("inf") else None,
+            "ENERGY_LIMIT(가중평균)": None,
+            "정규화판정": "NO_PROFILE",
             "여유율": None,
         }
 
     clear_ok, required_energy, margin_pct = judge_clear(boss_hp=boss_hp, P=P, energy_limit=energy_limit)
     return {
         "필요총에너지(boss_hp/P)": int(required_energy) if required_energy != float("inf") else None,
-        "ENERGY_LIMIT": int(energy_limit),
+        "ENERGY_LIMIT(가중평균)": int(energy_limit),
         "정규화판정": "CLEAR" if clear_ok else "FAIL",
         "여유율": float(f"{margin_pct:.1f}"),
     }
