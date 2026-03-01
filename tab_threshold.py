@@ -85,6 +85,13 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party, 
         if not last:
             st.info("최근 계산 옵션이 없어요. 탭1 또는 탭2에서 먼저 '계산'을 한 번 실행해줘.")
             return
+
+
+        st.markdown("### 🔎 현재 세션 BOSS_LIMITS 상태")
+        
+        store = get_limits_store()
+        st.json(store)
+
         
         st.markdown("### 📤/📥 기준 데이터 내보내기/가져오기")
         
@@ -93,12 +100,11 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party, 
         
         st.download_button(
             label="📤 현재 기준(JSON) 다운로드",
-            data=json_str,
+            data=json.dumps(store, ensure_ascii=False, indent=2),
             file_name="boss_limits.json",
             mime="application/json",
-            key="download_limits_json"
         )
-        
+                
         uploaded = st.file_uploader("📥 boss_limits.json 업로드(가져오기)", type=["json"], key="upload_limits_json")
         
         if uploaded is not None:
