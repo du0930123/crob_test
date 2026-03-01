@@ -146,7 +146,7 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party, 
                     weakness_bonus_by_color=weakness_bonus_by_color,
                     energy_decrease_by_color=energy_decrease_by_color,
                 )
-                
+                ref_vec = party_to_mp_share_vector(party)
                 if total_dmg_per_mp_sum <= 0:
                     raise ValueError("기준 파티의 P값이 0 이하입니다.")
                 
