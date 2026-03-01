@@ -570,7 +570,16 @@ with tab2:
             min_value=0.0, max_value=1000.0, value=0.0, step=1.0,
             key="boss_hp_inc_pct_cmp"
         )
+        
+    BOSS_LIST = ["두억시니", "사마귀"]
+    selected_boss_cmp = st.selectbox(
+        "보스 선택(비교 기준)",
+        BOSS_LIST,
+        index=0,   # ✅ 두억시니 기본
+        key="tab2_boss_select"
+    )
 
+    
     if st.button("파티 비교 실행"):
         
         st.session_state["LAST_CALC_OPTS"] = {
@@ -611,13 +620,6 @@ with tab2:
                 if party5_on_cmp:
                     effective_boss_hp_cmp *= 5.0
 
-                BOSS_LIST = ["두억시니", "사마귀"]
-                selected_boss_cmp = st.selectbox(
-                    "보스 선택(비교 기준)",
-                    BOSS_LIST,
-                    index=0,   # ✅ 두억시니 기본
-                    key="tab2_boss_select"
-                )
 
                 judge_cols = judge_clear_for_table(
                     boss=selected_boss_cmp,          # ✅ 여기
