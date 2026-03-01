@@ -155,7 +155,7 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party, 
                     raise ValueError("기준 파티의 P값이 0 이하입니다.")
                 
                 boss_hp_est = float(threshold_cycles) * float(total_dmg)   # ✅ 보스 체력(상대값) 추정
-                limit_norm  = boss_hp_est / P                               # ✅ 정규화 기준(시간에 비례)
+                ref_required_norm = boss_hp_est / P                              # ✅ 정규화 기준(시간에 비례)
 
 
                 store = get_limits_store()
@@ -164,7 +164,7 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party, 
                 
                 store[boss]["profiles"].append({
                     "boss_hp_est": float(boss_hp_est),
-                    "limit_norm": float(limit_norm),
+                    "ref_required_norm": float(ref_required_norm),
                 
                     "ref_party": ref_party_text,
                     "ref_vec": ref_vec,
@@ -183,7 +183,7 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party, 
                 
                 save_limits(store)
                 
-                st.success(f"저장 완료! (limit_norm = {limit_norm:,.2f}, boss_hp_est = {boss_hp_est:,.0f})")
+                st.success(f"저장 완료! (ref_required_norm = {ref_required_norm:,.2f}, boss_hp_est = {boss_hp_est:,.0f})")
                 st.caption(f"- 기준 파티 1사이클 총 MP = {total_mp:,}")
                 st.caption(f"- 기준 파티 P(Σ(dmg/eff_mp)) = {total_dmg_per_mp_sum:,.2f}")
 
@@ -206,7 +206,7 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party, 
                 options=list(range(len(profs))),
                 format_func=lambda i: (
                     f"{i+1}. [{profs[i].get('label','-')}] "
-                    f"limit_norm={float(profs[i].get('limit_norm',0)):,.2f} | "
+                    f"ref_required_norm={float(profs[i].get('ref_required_norm',0)):,.2f} | "
                     f"boss_hp_est={float(profs[i].get('boss_hp_est',0)):,.0f} | "
                     f"{profs[i].get('ref_party','')}"
                 ),
@@ -232,7 +232,7 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party, 
             st.caption(f"최근 {show_n}개만 표시")
             for i, p in enumerate(profs[-show_n:], start=max(1, len(profs) - show_n + 1)):
                 st.write(
-                    f"{i}. [{p.get('label','-')}] limit_norm={float(p.get('limit_norm',0)):,.2f} | boss_hp_est={float(p.get('boss_hp_est',0)):,.0f} | 기준파티=`{p.get('ref_party','')}`"
+                    f"{i}. [{p.get('label','-')}] ref_required_norm={float(p.get('ref_required_norm',0)):,.2f} | boss_hp_est={float(p.get('boss_hp_est',0)):,.0f} | 기준파티=`{p.get('ref_party','')}`"
                 )
         else:
             st.info("아직 저장된 프로필이 없어요. 위에서 저장해줘.")
