@@ -76,8 +76,8 @@ def l1_distance(a: Dict[str, float], b: Dict[str, float]) -> float:
 
 def _get_boss_profiles(boss: str) -> List[Dict[str, Any]]:
     """
-    새 구조: store[boss]["profiles"] = [ {energy_limit, ref_vec, ref_party, ...}, ... ]
-    구 구조(하위호환): store[boss][party_type]["energy_limit"] 형태는 여기서 자동 사용 못함.
+    새 구조: store[boss]["profiles"] = [ {ref_required_norm, ref_vec, ref_party, ...}, ... ]
+    구 구조(하위호환): store[boss][party_type]["ref_required_norm"] 형태는 여기서 자동 사용 못함.
       -> party_type을 없앴기 때문에, 구 구조는 마이그레이션 필요.
     """
     store = get_limits_store()
@@ -104,7 +104,7 @@ def compute_energy_limit_weighted(
         w_i = 1 / (d_i + eps)^power
 
     Returns:
-      energy_limit (float or None)
+      ref_required_norm (float or None)
       used_profiles (list of dict with dist, weight info) or None
       err_msg (str or None)
     """
@@ -128,7 +128,7 @@ def compute_energy_limit_weighted(
         scored.append((d, p))
 
     if not scored:
-        return None, None, "profiles는 있는데 ref_vec/energy_limit이 유효한 항목이 없어요."
+        return None, None, "profiles는 있는데 ref_vec/ref_required_norm이 유효한 항목이 없어요."
 
     # 가까운 순 정렬 후 상위 k개만 사용
     scored.sort(key=lambda x: x[0])
