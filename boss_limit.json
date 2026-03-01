@@ -1,4 +1,3 @@
-
 {
   "두억시니": {
     "profiles": [
@@ -19,6 +18,27 @@
         },
         "ref_weakness_bonus_by_color": {},
         "threshold_cycles": 73
+      },
+      {
+        "boss_hp_est": 18256002207.300003,
+        "label": "빨강(주로 비트 구성)",
+        "ref_P": 585128.275875,
+        "ref_common_damage_buff_pct": 30.0,
+        "ref_energy_decrease_by_color": {},
+        "ref_party": "비트 3 캡틴아이스 1 레판 1",
+        "ref_required_norm": 31200.000000000004,
+        "ref_stone_crit_buff_pct": 56.0,
+        "ref_total_dmg": 234051310.35000002,
+        "ref_total_mp": 2000,
+        "ref_vec": {
+          "레판": 0.2,
+          "비트": 0.6,
+          "캡틴아이스": 0.2
+        },
+        "ref_weakness_bonus_by_color": {
+          "노랑": 0.0
+        },
+        "threshold_cycles": 78
       }
     ]
   }
