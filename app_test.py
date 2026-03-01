@@ -534,7 +534,8 @@ with tab2:
                 cycles = math.ceil(effective_boss_hp_cmp / total_dmg) if total_dmg > 0 else 0
                 effective_total_dmg_async = total_dmg * dps_ratio_async
                 cycles_with_energy_async = math.ceil(effective_boss_hp_cmp / effective_total_dmg_async) if effective_total_dmg_async > 0 else 0
-
+                
+                
                 rows.append({
                     "파티 구성": line,
                     "약점 적용": ", ".join([f"{k}(+30%+{v*100:+.0f}%)" for k, v in weakness_bonus_by_color_cmp.items()]) or "-",
