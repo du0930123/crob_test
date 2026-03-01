@@ -12,29 +12,33 @@ def _ensure_session():
 
 
 def load_limits(path: str = DEFAULT_PATH) -> Dict[str, Any]:
-    """JSON -> session_state['BOSS_LIMITS'] 로드"""
     _ensure_session()
     if os.path.exists(path):
         try:
             with open(path, "r", encoding="utf-8") as f:
                 st.session_state["BOSS_LIMITS"] = json.load(f) or {}
         except Exception:
-            # 파일이 깨졌거나 비어있으면 안전하게 초기화
             st.session_state["BOSS_LIMITS"] = {}
     else:
         st.session_state["BOSS_LIMITS"] = {}
+        # 파일도 하나 만들어둠(선택)
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump({}, f, ensure_ascii=False, indent=2)
+        except Exception:
+            pass
+
     return st.session_state["BOSS_LIMITS"]
 
 
 def save_limits(store: Dict[str, Any], path: str = DEFAULT_PATH) -> None:
-    """session_state['BOSS_LIMITS'] -> JSON 저장"""
-    # JSON 직렬화 안정화용(키 정렬, 들여쓰기)
-    with open(path, "w", encoding="utf-8") as f:
+    tmp = f"{path}.tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
         json.dump(store, f, ensure_ascii=False, indent=2, sort_keys=True)
+    os.replace(tmp, path)
 
 
 def get_limits_store(path: str = DEFAULT_PATH) -> Dict[str, Any]:
-    """세션에 없으면 로드하고 반환"""
     if "BOSS_LIMITS" not in st.session_state:
         load_limits(path)
     return st.session_state["BOSS_LIMITS"]
