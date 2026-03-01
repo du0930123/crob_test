@@ -1,1 +1,25 @@
 
+{
+  "두억시니": {
+    "profiles": [
+      {
+        "boss_hp_est": 15719080874.999998,
+        "label": "파랑(눈설탕, 캡아 구성)",
+        "ref_P": 573765.2280405405,
+        "ref_common_damage_buff_pct": 42.0,
+        "ref_energy_decrease_by_color": {},
+        "ref_party": "눈설탕 4 캡틴아이스 1",
+        "ref_required_norm": 27396.363716013366,
+        "ref_stone_crit_buff_pct": 0.0,
+        "ref_total_dmg": 215329874.99999997,
+        "ref_total_mp": 1880,
+        "ref_vec": {
+          "눈설탕": 0.7872340425531915,
+          "캡틴아이스": 0.2127659574468085
+        },
+        "ref_weakness_bonus_by_color": {},
+        "threshold_cycles": 73
+      }
+    ]
+  }
+}
