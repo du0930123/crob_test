@@ -389,7 +389,7 @@ with tab1:
     with col1:
         common_damage_buff_pct = st.number_input(
             "공통 피해증가율(%) (ex : 유틸버프, 쿠키가주는피해량증가)",
-            min_value=0.0, max_value=1000.0, value=42.0, step=1.0
+            min_value=0.0, max_value=1000.0, value=30.0, step=1.0
         )
     with col2:
         stone_crit_buff_pct = st.number_input(
