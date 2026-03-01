@@ -64,14 +64,15 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party, 
             st.session_state["IS_ADMIN"] = False
 
         st.markdown("### 🔐 운영자 인증")
-        pw = st.text_input("관리자 비밀번호", type="password", key="admin_pw_input")
-
+        # ✅ admin auth keys (boss별로 유니크)
+        pw = st.text_input("관리자 비밀번호", type="password", key=f"admin_pw_input_{boss}")
+        
         colA, colB = st.columns(2)
         with colA:
-            if st.button("로그인", key="admin_login_btn"):
+            if st.button("로그인", key=f"admin_login_btn_{boss}"):
                 st.session_state["IS_ADMIN"] = (pw == "0930")
         with colB:
-            if st.button("로그아웃", key="admin_logout_btn"):
+            if st.button("로그아웃", key=f"admin_logout_btn_{boss}"):
                 st.session_state["IS_ADMIN"] = False
 
         is_admin = bool(st.session_state["IS_ADMIN"])
