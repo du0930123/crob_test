@@ -24,21 +24,21 @@ def compute_required_energy(boss_hp: float, P: float) -> float:
     return boss_hp / P
 
 
-def judge_clear(boss_hp: float, P: float, energy_limit: float) -> Tuple[bool, float, float]:
+def judge_clear(boss_hp: float, P: float, ref_required_norm: float) -> Tuple[bool, float, float]:
     """
+    ref_required_norm: (가중평균된) 기준 정규화 예산 = limit_norm = boss_hp/P 한계치
     Returns:
       clear_ok (bool),
-      required_energy (float),
+      required_energy (float) = boss_hp / P,
       margin_pct (float)  # (+)면 여유, (-)면 부족
     """
     required_energy = compute_required_energy(boss_hp, P)
-    if energy_limit <= 0 or required_energy == float("inf"):
+    if ref_required_norm <= 0 or required_energy == float("inf"):
         return False, required_energy, float("-inf")
 
-    margin_pct = (energy_limit - required_energy) / energy_limit * 100.0
+    margin_pct = (ref_required_norm - required_energy) / ref_required_norm * 100.0
     clear_ok = required_energy <= ref_required_norm
     return clear_ok, required_energy, margin_pct
-
 
 # ==========================================================
 # ✅ party_type 제거 버전: 보스 전체 profiles 풀로 ENERGY_LIMIT 계산
@@ -119,10 +119,10 @@ def compute_energy_limit_weighted(
     scored = []
     for p in profiles:
         ref_vec = p.get("ref_vec", {})
-        limit = p.get("energy_limit", None)
+        limit_norm = p.get("ref_required_norm", None)
         if not isinstance(ref_vec, dict) or len(ref_vec) == 0:
             continue
-        if limit is None:
+        if limit_norm is None:
             continue
         d = l1_distance(cur_vec, ref_vec)
         scored.append((d, p))
@@ -151,12 +151,12 @@ def compute_energy_limit_weighted(
         used.append({
             "ref_party": p.get("ref_party", ""),
             "label": p.get("label", ""),
-            "energy_limit": float(p.get("energy_limit", 0.0)),
+            "ref_required_norm": float(p.get("ref_required_norm", 0.0)),
             "dist": float(d),
             "weight": float(w / wsum),  # 정규화 가중치(합 1)
         })
 
-    return float(energy_limit), used, None
+    return float(ref_required_norm), used, None
 
 
 # ----------------------------
@@ -178,21 +178,21 @@ def render_clear_judge_box(
     """
     st.markdown("### ✅ 정규화 클리어 판정(가중평균, party_type 없음)")
 
-    energy_limit, used, err = compute_energy_limit_weighted(
+    ref_required_norm, used, err = compute_energy_limit_weighted(
         boss=boss,
         party=party,
         k=k_profiles,
         power=weight_power,
     )
 
-    if err or energy_limit is None:
+    if err or ref_required_norm is None:
         st.info(err or "ENERGY_LIMIT을 계산할 수 없어요.")
         return
 
-    clear_ok, required_energy, margin_pct = judge_clear(boss_hp=boss_hp, P=P, energy_limit=energy_limit)
+    clear_ok, required_energy, margin_pct = judge_clear(boss_hp=boss_hp, P=P, ref_required_norm=ref_required_norm)
 
     st.write(f"- 필요 총 에너지(required_energy = boss_hp / P): **{required_energy:,.0f}**")
-    st.write(f"- ENERGY_LIMIT(가중평균): **{energy_limit:,.0f}**")
+    st.write(f"- 기준 정규화 한계(ref_required_norm, 가중평균): **{ref_required_norm:,.0f}**")
 
     if show_match_info and used:
         with st.expander("가중치로 사용된 기준 프로필(상위 매칭)", expanded=False):
@@ -200,7 +200,7 @@ def render_clear_judge_box(
                 ref = u.get("ref_party", "")
                 lbl = u.get("label", "")
                 st.write(
-                    f"- [{lbl or '-'}] `{ref}` | limit={u['energy_limit']:,.0f} | dist={u['dist']:.3f} | weight={u['weight']*100:.1f}%"
+                    f"- [{lbl or '-'}] `{ref}` | ref_required_norm={u['ref_required_norm']:,.0f} | dist={u['dist']:.3f} | weight={u['weight']*100:.1f}%"
                 )
 
     if clear_ok:
@@ -220,7 +220,7 @@ def judge_clear_for_table(
     """
     탭2(비교 테이블)용: UI 없이 결과만 반환
     """
-    energy_limit, used, err = compute_energy_limit_weighted(
+    ref_required_norm, used, err = compute_energy_limit_weighted(
         boss=boss,
         party=party,
         k=k_profiles,
@@ -229,7 +229,7 @@ def judge_clear_for_table(
 
     required_energy = compute_required_energy(boss_hp, P)
 
-    if err or energy_limit is None:
+    if err or ref_required_norm is None:
         return {
             "필요총에너지(boss_hp/P)": int(required_energy) if required_energy != float("inf") else None,
             "ENERGY_LIMIT(가중평균)": None,
@@ -237,10 +237,10 @@ def judge_clear_for_table(
             "여유율": None,
         }
 
-    clear_ok, required_energy, margin_pct = judge_clear(boss_hp=boss_hp, P=P, energy_limit=energy_limit)
+    clear_ok, required_energy, margin_pct = judge_clear(boss_hp=boss_hp, P=P, ref_required_norm=ref_required_norm)
     return {
         "필요총에너지(boss_hp/P)": int(required_energy) if required_energy != float("inf") else None,
-        "ENERGY_LIMIT(가중평균)": int(energy_limit),
+        "ref_required_norm(가중평균)": float(f"{ref_required_norm:.1f}"),
         "정규화판정": "CLEAR" if clear_ok else "FAIL",
         "여유율": float(f"{margin_pct:.1f}"),
     }
