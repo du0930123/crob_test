@@ -243,11 +243,49 @@ st.set_page_config(page_title="CROB 파티 딜 계산", page_icon="🧮")
 from boss_limits_store import load_limits
 load_limits()  # ✅ 서버에 저장된 boss_limits.json을 읽어서 모든 접속자에게 동일 기준 적용
 
-
-# ✅ 관리자 모드 판별 (URL에 ?admin=1 붙이면 활성화)
+# ✅ 관리자 모드 판별 (URL에 ?admin=1 붙이면 "관리자 로그인 UI"가 열림)
 params = st.query_params
-admin_mode = str(params.get("admin", "0")).strip() in ["1", "true", "True", "yes", "YES"]
+admin_flag = str(params.get("admin", "0")).strip().lower() in ["1", "true", "yes"]
 
+# ✅ 관리자 인증 상태(세션별)
+if "ADMIN_AUTH" not in st.session_state:
+    st.session_state["ADMIN_AUTH"] = False
+
+ADMIN_PASSWORD = "0930"  # 요청한 비밀번호
+
+def admin_login_gate() -> bool:
+    """
+    - URL에 ?admin=1 이 있을 때만 로그인 UI 노출
+    - 비밀번호 맞으면 세션에 ADMIN_AUTH=True 저장
+    - 세션이 유지되는 동안 계속 관리자
+    """
+    if not admin_flag:
+        return False
+
+    # 이미 인증된 세션이면 통과
+    if st.session_state["ADMIN_AUTH"]:
+        return True
+
+    with st.sidebar:
+        st.markdown("### 🔒 관리자 로그인")
+        pw = st.text_input("비밀번호", type="password", key="admin_pw_input")
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("로그인", key="admin_login_btn"):
+                if pw == ADMIN_PASSWORD:
+                    st.session_state["ADMIN_AUTH"] = True
+        with col2:
+            if st.button("로그아웃", key="admin_logout_btn"):
+                st.session_state["ADMIN_AUTH"] = False
+
+        if st.session_state["ADMIN_AUTH"]:
+            st.success("관리자 인증 완료")
+        else:
+            st.info("관리자 기능은 비밀번호가 필요합니다.")
+
+    return st.session_state["ADMIN_AUTH"]
+
+admin_mode = admin_login_gate()
 
 st.title("🧮 쿠오븐 레이드파티 기대 딜량 계산")
 st.markdown("<hr style='margin: 6px 0;'>", unsafe_allow_html=True)
