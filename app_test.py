@@ -240,6 +240,10 @@ def get_limits_store():
 # ============================
 st.set_page_config(page_title="CROB 파티 딜 계산", page_icon="🧮")
 
+from boss_limits_store import load_limits
+load_limits()  # ✅ 서버에 저장된 boss_limits.json을 읽어서 모든 접속자에게 동일 기준 적용
+
+
 # ✅ 관리자 모드 판별 (URL에 ?admin=1 붙이면 활성화)
 params = st.query_params
 admin_mode = str(params.get("admin", "0")).strip() in ["1", "true", "True", "yes", "YES"]
