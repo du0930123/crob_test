@@ -186,7 +186,7 @@ def render_clear_judge_box(
     )
 
     if err or ref_required_norm is None:
-        st.info(err or "ENERGY_LIMIT을 계산할 수 없어요.")
+        st.info(err or "ref_required_norm을 계산할 수 없어요.")
         return
 
     clear_ok, required_energy, margin_pct = judge_clear(boss_hp=boss_hp, P=P, ref_required_norm=ref_required_norm)
@@ -232,7 +232,7 @@ def judge_clear_for_table(
     if err or ref_required_norm is None:
         return {
             "필요총에너지(boss_hp/P)": int(required_energy) if required_energy != float("inf") else None,
-            "ENERGY_LIMIT(가중평균)": None,
+            "ref_required_norm(가중평균)": None,
             "정규화판정": "NO_PROFILE",
             "여유율": None,
         }
