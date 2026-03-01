@@ -7,7 +7,7 @@ def get_limits_store():
         st.session_state["BOSS_LIMITS"] = {}
     return st.session_state["BOSS_LIMITS"]
     
-def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party):
+def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party, admin_mode: bool = False):
     st.subheader("📌 파티사이클 클리어 여부 경계값 (정규화 적용)")
 
     # 보스 선택 (확장 가능)
@@ -33,7 +33,7 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party):
     )
 
     # ✅ 기존 경험적 가이드(표시용)
-    st.markdown("### (표시용) 기존 경험적 파티사이클 경계")
+    st.markdown("### 경험적 파티사이클 경계")
     if party_type in ["빨강(주로 비트 구성)", "파랑(눈설탕, 캡아 구성)"]:
         st.write("- 기준: **105 ~ 110회**")
     elif party_type == "노랑(주로 스네 구성)":
@@ -42,11 +42,15 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party):
         st.write("- 기준: **데이터 없음**")
     st.markdown("---")
 
+    
+# --- 위쪽(보스 선택, 조건, 파티유형, 표시용 경계값)은 그대로 두고 ---
+
+# ✅ 여기부터: 관리자만 보이게
+if admin_mode:
     st.markdown("### ✅ 정규화 기준 저장(캘리브레이션)")
     st.caption("이 탭에서 '기준 파티'와 '경계 파티사이클(예: 110)'을 입력하면, 보스/파티유형별 ENERGY_LIMIT(총 에너지 예산)이 저장돼요.")
     st.caption("이후 탭1/2에서 required_energy(=boss_hp/P) 와 ENERGY_LIMIT 를 비교해서 클리어 판정을 합니다.")
 
-    # 기준 파티 입력
     default_party = {
         "빨강(주로 비트 구성)": "비트 1 레판 4",
         "빨강(주로 인삼 구성)": "인삼 3 비트 1 레판 1",
@@ -54,9 +58,12 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party):
         "노랑(주로 스네 구성)": "스네이크 3 캡틴아이스 1",
     }.get(party_type, "스네이크 3 캡틴아이스 1")
 
-    ref_party_text = st.text_input("기준 파티(텍스트)", value=default_party, key=f"ref_party_{boss}_{party_type}")
+    ref_party_text = st.text_input(
+        "기준 파티(텍스트)",
+        value=default_party,
+        key=f"ref_party_{boss}_{party_type}"
+    )
 
-    # 경계 파티사이클(입력)
     threshold_cycles = st.number_input(
         "경계 파티사이클(회) (예: 110 또는 155)",
         min_value=1,
@@ -65,9 +72,13 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party):
         key=f"threshold_cycles_{boss}_{party_type}"
     )
 
-    # 기준 파티 계산에 필요한 옵션들(탭1/2와 동일 축)
     st.markdown("#### 기준 파티 계산 옵션(탭1/2와 동일하게 맞추는 게 권장)")
-    weakness_colors = st.multiselect("보스 약점 색 선택(최대 2개)", options=COLOR_OPTIONS, default=[], key=f"ref_weak_{boss}_{party_type}")
+    weakness_colors = st.multiselect(
+        "보스 약점 색 선택(최대 2개)",
+        options=COLOR_OPTIONS,
+        default=[],
+        key=f"ref_weak_{boss}_{party_type}"
+    )
     if len(weakness_colors) > 2:
         weakness_colors = weakness_colors[:2]
 
@@ -84,7 +95,10 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party):
             )
             weakness_bonus_by_color[wc] = pct / 100.0
 
-            energy_on = st.checkbox(f"{wc}색 에너지획득량감소 적용", key=f"ref_energy_on_{boss}_{party_type}_{wc}")
+            energy_on = st.checkbox(
+                f"{wc}색 에너지획득량감소 적용",
+                key=f"ref_energy_on_{boss}_{party_type}_{wc}"
+            )
             if energy_on:
                 e_pct = st.number_input(
                     f"{wc}색 에너지 획득량 감소(%)",
@@ -107,7 +121,6 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party):
             key=f"ref_crit_{boss}_{party_type}"
         )
 
-    # 저장 버튼
     if st.button("✅ 이 보스/파티유형 기준값 저장", key=f"save_limit_{boss}_{party_type}"):
         try:
             party = build_party_from_text(ref_party_text)
@@ -120,12 +133,10 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party):
                 energy_decrease_by_color=energy_decrease_by_color,
             )
 
-            # ✅ ENERGY_LIMIT = 경계 회수 * (기준 파티의 1사이클 총 MP)
             energy_limit = float(threshold_cycles) * float(total_mp)
 
             store = get_limits_store()
-            if boss not in store:
-                store[boss] = {}
+            store.setdefault(boss, {})
             store[boss][party_type] = {
                 "energy_limit": energy_limit,
                 "ref_party": ref_party_text,
@@ -145,7 +156,6 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party):
         except Exception as e:
             st.error(str(e))
 
-    # 현재 저장된 값 표시
     st.markdown("---")
     st.markdown("### 📦 현재 저장된 기준값")
     store = get_limits_store()
@@ -158,3 +168,6 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party):
         st.write(f"- 기준 파티 1사이클 총 MP: **{cur['ref_total_mp']:,}**")
     else:
         st.info("아직 이 보스/유형에 저장된 기준값이 없어요. 위에서 저장해줘.")
+
+else:
+    st.info("기준값 설정은 관리자만 가능해요.")
