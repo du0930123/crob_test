@@ -176,7 +176,7 @@ def render_clear_judge_box(
     party_type 선택 없음.
     보스 profiles 풀에서 자동으로 ENERGY_LIMIT(가중평균)을 계산.
     """
-    st.markdown("### ✅ 정규화 클리어 판정(가중평균, party_type 없음)")
+    st.markdown("### ✅ 정규화 클리어 판정")
 
     ref_required_norm, used, err = compute_energy_limit_weighted(
         boss=boss,
