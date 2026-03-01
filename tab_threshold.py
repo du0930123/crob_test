@@ -1,4 +1,5 @@
 import math
+import json
 import streamlit as st
 from typing import Dict, Any
 from boss_limits_store import get_limits_store, save_limits
@@ -84,7 +85,32 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party, 
         if not last:
             st.info("최근 계산 옵션이 없어요. 탭1 또는 탭2에서 먼저 '계산'을 한 번 실행해줘.")
             return
-
+        
+        st.markdown("### 📤/📥 기준 데이터 내보내기/가져오기")
+        
+        store = get_limits_store()
+        json_str = json.dumps(store, ensure_ascii=False, indent=2)
+        
+        st.download_button(
+            label="📤 현재 기준(JSON) 다운로드",
+            data=json_str,
+            file_name="boss_limits.json",
+            mime="application/json",
+            key="download_limits_json"
+        )
+        
+        uploaded = st.file_uploader("📥 boss_limits.json 업로드(가져오기)", type=["json"], key="upload_limits_json")
+        
+        if uploaded is not None:
+            try:
+                new_store = json.load(uploaded)
+                st.session_state["BOSS_LIMITS"] = new_store  # 세션에 즉시 반영
+                save_limits(new_store)  # (로컬이면 파일도 갱신, 클라우드는 일단 시도)
+                st.success("가져오기 완료! (세션에 반영됨) 필요하면 앱 rerun 해줘.")
+                st.rerun()
+            except Exception as e:
+                st.error(str(e))
+                
         st.markdown("### ✅ 정규화 기준 저장(캘리브레이션)")
         st.caption("관리자가 기준 파티/경계 사이클을 저장하면 boss_limits.json에 반영되어 모든 접속자에게 동일하게 적용돼요.")
         st.caption("※ 저장은 party_type을 '분류로 쓰지 않고', 보스별 profiles 풀에 누적 저장됩니다. (판정 시 자동 거리/가중치로 사용)")
