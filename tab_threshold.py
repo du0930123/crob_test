@@ -12,8 +12,34 @@ def get_limits_store():
 def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party, admin_mode: bool = False):
     st.subheader("📌 파티사이클 클리어 여부 경계값 (정규화 적용)")
 
-    # 보스 선택 (확장 가능)
-    boss = st.selectbox("보스 선택", ["사마귀"], index=0)
+    # 보스 목록 (확장 가능)
+    BOSS_LIST = ["사마귀", "두억시니"]
+    
+    BOSS_GUIDE = {
+        "사막위의 무법자": {
+            "빨강(주로 비트 구성)": "105 ~ 110회",
+            "파랑(눈설탕, 캡아 구성)": "105 ~ 110회",
+            "노랑(주로 스네 구성)": "155회 내외",
+            "빨강(주로 인삼 구성)": "데이터 없음",
+        },
+        "두억시니": {
+            "빨강(비트, 레판 구성)": "미정",
+            "파랑(눈설탕, 캡아 구성)": "미정",
+            "노랑(스네, 캡아 구성)": "미정",
+            "빨강(인삼, 캡아 구성)": "미정",
+        }
+    }
+
+boss = st.selectbox("보스 선택", BOSS_LIST, index=0)
+
+st.markdown("### 경험적 파티사이클 경계")
+guide = BOSS_GUIDE.get(boss, {})
+cycle_text = guide.get(party_type, "데이터 없음")
+st.write(f"- 기준: **{cycle_text}**")
+    
+
+    
+    boss = st.selectbox("보스 선택", BOSS_LIST, index=0)
 
     # 조건 표시(참고 문구 유지)
     st.markdown("### 조건")
