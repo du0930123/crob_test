@@ -1,13 +1,7 @@
 import math
 import streamlit as st
 from typing import Dict
-
-
-def get_limits_store():
-    if "BOSS_LIMITS" not in st.session_state:
-        st.session_state["BOSS_LIMITS"] = {}
-    return st.session_state["BOSS_LIMITS"]
-
+from boss_limits_store import get_limits_store, save_limits
 
 def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party, admin_mode: bool = False):
     st.subheader("📌 파티사이클 클리어 여부 경계값 (정규화 적용)")
