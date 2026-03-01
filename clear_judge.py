@@ -116,6 +116,13 @@ def compute_energy_limit_weighted(
     if not cur_vec:
         return None, None, "현재 파티의 MP 벡터를 만들 수 없어요(mp_cost 확인)."
 
+    st.write("DEBUG profiles len:", len(profiles))
+    st.write("DEBUG first profile keys:", list(profiles[0].keys()) if profiles else None)
+    st.write("DEBUG valid count:", sum(
+        1 for p in profiles
+        if isinstance(p.get("ref_vec"), dict) and len(p.get("ref_vec")) > 0 and p.get("ref_required_norm") not in [None, 0]
+    ))
+
     scored = []
     for p in profiles:
         ref_vec = p.get("ref_vec", {})
