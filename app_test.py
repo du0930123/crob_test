@@ -516,15 +516,7 @@ with tab2:
 
     if st.button("파티 비교 실행"):
         
-        judge_cols = judge_clear_for_table(
-            boss="사마귀",
-            boss_hp=effective_boss_hp_cmp,
-            P=total_dmg_per_mp_sum,
-            party=party,           # ✅ 변경
-            k_profiles=5,
-            weight_power=1.0,
-        )
-        
+
         rows = []
         for line in party_texts.splitlines():
             if not line.strip():
@@ -559,7 +551,9 @@ with tab2:
                     boss="사마귀",
                     boss_hp=effective_boss_hp_cmp,
                     P=total_dmg_per_mp_sum,
-                    party_type=judge_party_type_tab2,
+                    party=party,           # ✅ 변경
+                    k_profiles=5,
+                    weight_power=1.0,
                 )
 
                 
