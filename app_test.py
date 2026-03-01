@@ -3,7 +3,15 @@ import math
 from dataclasses import dataclass
 from typing import Dict, List
 from clear_judge import render_clear_judge_box, judge_clear_for_table
+from tab_threshold import render_threshold_tab
 
+with tab3:
+    render_threshold_tab(
+        COLOR_OPTIONS=COLOR_OPTIONS,
+        build_party_from_text=build_party_from_text,
+        calculate_party=calculate_party,
+    )
+    
 # ============================
 # 고정 규칙
 # ============================
