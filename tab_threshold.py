@@ -238,4 +238,4 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party, 
             st.info("아직 저장된 프로필이 없어요. 위에서 저장해줘.")
 
     else:
-        st.info("기준값 설정은 관리자만 가능해요.")
+        st.info("-")
