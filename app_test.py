@@ -208,6 +208,29 @@ def compute_async_dps_ratio(
 
     return eff_sum / base_sum
 
+# ============================
+# ✅ 정규화 기반 "필요 총 에너지" 계산
+# - P = Σ(dmg / eff_mp) = total_dmg_per_mp_sum
+# - required_energy = boss_hp / P
+# ============================
+def compute_required_energy(boss_hp: float, total_dmg_per_mp_sum: float) -> float:
+    if boss_hp <= 0:
+        return 0.0
+    if total_dmg_per_mp_sum <= 0:
+        return float("inf")
+    return boss_hp / total_dmg_per_mp_sum
+
+
+# ============================
+# ✅ 보스-파티유형별 ENERGY_LIMIT(총 에너지 예산) 저장소
+# - Streamlit 세션에 저장해서 탭 간 공유
+# ============================
+def get_limits_store():
+    if "BOSS_LIMITS" not in st.session_state:
+        st.session_state["BOSS_LIMITS"] = {}  # {boss: {party_type: {"energy_limit": float, "ref_party": str, "threshold_cycles": int}}}
+    return st.session_state["BOSS_LIMITS"]
+
+
 
 # ============================
 # Streamlit UI
