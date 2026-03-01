@@ -36,7 +36,7 @@ def judge_clear(boss_hp: float, P: float, energy_limit: float) -> Tuple[bool, fl
         return False, required_energy, float("-inf")
 
     margin_pct = (energy_limit - required_energy) / energy_limit * 100.0
-    clear_ok = required_energy <= energy_limit
+    clear_ok = required_energy <= ref_required_norm
     return clear_ok, required_energy, margin_pct
 
 
@@ -144,7 +144,7 @@ def compute_energy_limit_weighted(
     if wsum <= 0:
         return None, None, "가중치 합이 0이에요(거리 계산 확인 필요)."
 
-    energy_limit = sum(w * float(p["energy_limit"]) for w, _, p in weights) / wsum
+    ref_required_norm = sum(w * float(p["ref_required_norm"]) for w, _, p in weights) / wsum
 
     used = []
     for w, d, p in weights:
