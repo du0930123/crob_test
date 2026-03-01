@@ -2,7 +2,7 @@ import streamlit as st
 import math
 from dataclasses import dataclass
 from typing import Dict, List
-
+from clear_judge import render_clear_judge_box, judge_clear_for_table
 
 # ============================
 # 고정 규칙
@@ -389,6 +389,18 @@ with tab1:
                     effective_boss_hp *= (1.0 + boss_hp_inc_pct / 100.0)
                 if party5_on:
                     effective_boss_hp *= 5.0
+
+                # ✅ 정규화 클리어 판정 박스(탭1)
+                party_type_options = ["빨강(주로 비트 구성)", "빨강(주로 인삼 구성)", "파랑(눈설탕, 캡아 구성)", "노랑(주로 스네 구성)"]
+
+                render_clear_judge_box(
+                    boss="사마귀",
+                    boss_hp=effective_boss_hp,
+                    P=total_dmg_per_mp_sum,
+                    party_type_options=party_type_options,
+                    default_party_type_index=3,   # 기본 노랑
+                    key_prefix="tab1_judge",
+                )
 
                 # ✅ 기존(에너지 미반영) 사이클
                 cycles = math.ceil(effective_boss_hp / total_dmg) if total_dmg > 0 else 0
