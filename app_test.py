@@ -239,6 +239,12 @@ def get_limits_store():
 # Streamlit UI
 # ============================
 st.set_page_config(page_title="CROB 파티 딜 계산", page_icon="🧮")
+
+# ✅ 관리자 모드 판별 (URL에 ?admin=1 붙이면 활성화)
+params = st.query_params
+admin_mode = str(params.get("admin", "0")).strip() in ["1", "true", "True", "yes", "YES"]
+
+
 st.title("🧮 쿠오븐 레이드파티 기대 딜량 계산")
 st.markdown("<hr style='margin: 6px 0;'>", unsafe_allow_html=True)
 st.caption("입력 예: 비트 3 레판 1  |  이름과 수량을 공백으로 구분")
@@ -586,8 +592,8 @@ with tab3:
         COLOR_OPTIONS=COLOR_OPTIONS,
         build_party_from_text=build_party_from_text,
         calculate_party=calculate_party,
+        admin_mode=admin_mode,   # ✅ 추가
     )
-
 
 st.markdown("---")
 st.caption("제작 : 카카오톡 오픈채팅방 쿠키런 only 레이드런방 - 오늘컨별로네")
