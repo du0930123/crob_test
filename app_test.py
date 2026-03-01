@@ -404,15 +404,16 @@ with tab1:
                     effective_boss_hp *= 5.0
 
                 # ✅ 정규화 클리어 판정 박스(탭1)
-                party_type_options = ["빨강(주로 비트 구성)", "빨강(주로 인삼 구성)", "파랑(눈설탕, 캡아 구성)", "노랑(주로 스네 구성)"]
 
                 render_clear_judge_box(
                     boss="사마귀",
                     boss_hp=effective_boss_hp,
                     P=total_dmg_per_mp_sum,
-                    party_type_options=party_type_options,
-                    default_party_type_index=3,   # 기본 노랑
+                    party=party,                 # ✅ 추가
                     key_prefix="tab1_judge",
+                    show_match_info=True,        # 필요하면 False로 숨김
+                    k_profiles=5,                # 상위 몇 개 프로필로 가중평균할지
+                    weight_power=1.0,            # 1.0 기본, 2.0이면 더 “가까운 기준” 위주
                 )
 
                 # ✅ 기존(에너지 미반영) 사이클
