@@ -247,6 +247,9 @@ load_limits()  # ✅ 서버에 저장된 boss_limits.json을 읽어서 모든 �
 params = st.query_params
 admin_flag = str(params.get("admin", "0")).strip().lower() in ["1", "true", "yes"]
 
+if "LAST_CALC_OPTS" not in st.session_state:
+    st.session_state["LAST_CALC_OPTS"] = {}
+
 # ✅ 관리자 인증 상태(세션별)
 if "ADMIN_AUTH" not in st.session_state:
     st.session_state["ADMIN_AUTH"] = False
@@ -399,6 +402,14 @@ with tab1:
             )
             dps_drop_async_pct = (1.0 - dps_ratio_async) * 100.0
 
+            st.session_state["LAST_CALC_OPTS"] = {
+                "weakness_colors": list(weakness_colors),
+                "weakness_bonus_by_color": dict(weakness_bonus_by_color),
+                "energy_decrease_by_color": dict(energy_decrease_by_color),
+                "common_damage_buff_pct": float(common_damage_buff_pct),
+                "stone_crit_buff_pct": float(stone_crit_buff_pct),
+            }
+            
             st.subheader("적용 요약")
             if weakness_bonus_by_color:
                 pretty = ", ".join([f"{k}(+30% 고정 + {v*100:+.0f}%)" for k, v in weakness_bonus_by_color.items()])
@@ -554,7 +565,14 @@ with tab2:
 
     if st.button("파티 비교 실행"):
         
-
+        st.session_state["LAST_CALC_OPTS"] = {
+            "weakness_colors": list(weakness_colors_cmp),
+            "weakness_bonus_by_color": dict(weakness_bonus_by_color_cmp),
+            "energy_decrease_by_color": dict(energy_decrease_by_color_cmp),
+            "common_damage_buff_pct": float(common_damage_buff_pct_cmp),
+            "stone_crit_buff_pct": float(stone_crit_buff_pct_cmp),
+        }
+        
         rows = []
         for line in party_texts.splitlines():
             if not line.strip():
