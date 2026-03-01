@@ -59,6 +59,10 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party, 
 
     # 🔒 관리자 영역
     if admin_mode:
+        last = st.session_state.get("LAST_CALC_OPTS", {})
+        if not last:
+            st.info("최근 계산 옵션이 없어요. 탭1 또는 탭2에서 먼저 '계산'을 한 번 실행해줘.")
+            return
         st.markdown("### ✅ 정규화 기준 저장(캘리브레이션)")
         st.caption("관리자가 기준 파티/경계 사이클을 저장하면 boss_limits.json에 반영되어 모든 접속자에게 동일하게 적용돼요.")
         st.caption("※ 저장은 party_type을 '분류로 쓰지 않고', 보스별 profiles 풀에 누적 저장됩니다. (판정 시 자동 거리/가중치로 사용)")
@@ -102,60 +106,7 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party, 
             key=f"threshold_cycles_{boss}_{party_type_label}"
         )
 
-        st.markdown("#### 기준 파티 계산 옵션(탭1/2와 동일하게 맞추는 게 권장)")
-
-        weakness_colors = st.multiselect(
-            "보스 약점 색 선택(최대 2개)",
-            options=COLOR_OPTIONS,
-            default=[],
-            key=f"ref_weak_{boss}_{party_type_label}"
-        )
-        if len(weakness_colors) > 2:
-            weakness_colors = weakness_colors[:2]
-
-        weakness_bonus_by_color: Dict[str, float] = {}
-        energy_decrease_by_color: Dict[str, float] = {}
-
-        if weakness_colors:
-            st.markdown("##### 약점 색별 조건부 피해증가율(%) / 에너지획득량감소(%)")
-            for wc in weakness_colors:
-                pct = st.number_input(
-                    f"{wc} 색 피해증감율(%)",
-                    min_value=-300.0, max_value=300.0,
-                    value=0.0, step=1.0,
-                    key=f"ref_weak_pct_{boss}_{party_type_label}_{wc}"
-                )
-                weakness_bonus_by_color[wc] = pct / 100.0
-
-                e_on = st.checkbox(
-                    f"{wc}색 에너지획득량감소 적용",
-                    key=f"ref_energy_on_{boss}_{party_type_label}_{wc}"
-                )
-                if e_on:
-                    e_pct = st.number_input(
-                        f"{wc}색 에너지 획득량 감소(%)",
-                        min_value=0.0, max_value=300.0,
-                        value=0.0, step=1.0,
-                        key=f"ref_energy_pct_{boss}_{party_type_label}_{wc}"
-                    )
-                    energy_decrease_by_color[wc] = e_pct / 100.0
-
-        col1, col2 = st.columns(2)
-        with col1:
-            common_damage_buff_pct = st.number_input(
-                "공통 피해증가율(%)",
-                min_value=0.0, max_value=1000.0,
-                value=42.0, step=1.0,
-                key=f"ref_common_{boss}_{party_type_label}"
-            )
-        with col2:
-            stone_crit_buff_pct = st.number_input(
-                "돌옵션 치명타 피해 증가율(%)",
-                min_value=0.0, max_value=1000.0,
-                value=0.0, step=1.0,
-                key=f"ref_crit_{boss}_{party_type_label}"
-            )
-
+  
         # ✅ 저장 버튼
         if st.button("✅ 이 보스 기준 프로필 저장(party_type 무시)", key=f"save_profile_{boss}_{party_type_label}"):
             try:
@@ -163,10 +114,10 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party, 
 
                 total_dmg, total_dmg_per_mp_sum, total_mp, _, _, _ = calculate_party(
                     party=party,
-                    common_damage_buff=common_damage_buff_pct / 100.0,
-                    stone_crit_buff=stone_crit_buff_pct / 100.0,
-                    weakness_bonus_by_color=weakness_bonus_by_color,
-                    energy_decrease_by_color=energy_decrease_by_color,
+                    common_damage_buff=last.get("common_damage_buff_pct", 0.0) / 100.0,
+                    stone_crit_buff=last.get("stone_crit_buff_pct", 0.0) / 100.0,
+                    weakness_bonus_by_color=last.get("weakness_bonus_by_color", {}),
+                    energy_decrease_by_color=last.get("energy_decrease_by_color", {}),
                 )
 
                 # ENERGY_LIMIT = 경계 회수 * (기준 파티 1사이클 총 MP)
