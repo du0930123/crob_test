@@ -454,8 +454,16 @@ with tab1:
 
                 # ✅ 정규화 클리어 판정 박스(탭1)
 
+                BOSS_LIST = ["두억시니", "사마귀"]
+                
+                selected_boss = st.selectbox(
+                    "보스 선택",
+                    BOSS_LIST,
+                    index=0,   # ✅ 두억시니가 기본
+                    key="tab1_boss_select"
+)
                 render_clear_judge_box(
-                    boss="사마귀",
+                    boss=selected_boss,
                     boss_hp=effective_boss_hp,
                     P=total_dmg_per_mp_sum,
                     party=party,                 # ✅ 추가
@@ -603,15 +611,22 @@ with tab2:
                 if party5_on_cmp:
                     effective_boss_hp_cmp *= 5.0
 
+                BOSS_LIST = ["두억시니", "사마귀"]
+                selected_boss_cmp = st.selectbox(
+                    "보스 선택(비교 기준)",
+                    BOSS_LIST,
+                    index=0,   # ✅ 두억시니 기본
+                    key="tab2_boss_select"
+                )
+
                 judge_cols = judge_clear_for_table(
-                    boss="사마귀",
+                    boss=selected_boss_cmp,          # ✅ 여기
                     boss_hp=effective_boss_hp_cmp,
                     P=total_dmg_per_mp_sum,
-                    party=party,           # ✅ 변경
+                    party=party,
                     k_profiles=5,
                     weight_power=1.0,
                 )
-
                 
                 cycles = math.ceil(effective_boss_hp_cmp / total_dmg) if total_dmg > 0 else 0
                 effective_total_dmg_async = total_dmg * dps_ratio_async
