@@ -59,27 +59,26 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party, 
 
     # 🔒 관리자 영역
     if admin_mode:
-            # 🔐 운영자 인증 (비밀번호: 0930)
-            if "IS_ADMIN" not in st.session_state:
-                st.session_state["IS_ADMIN"] = False
-        
-            st.markdown("### 🔐 운영자 인증")
-            pw = st.text_input("관리자 비밀번호", type="password", key="admin_pw_input")
-        
-            colA, colB = st.columns(2)
-            with colA:
-                if st.button("로그인", key="admin_login_btn"):
-                    st.session_state["IS_ADMIN"] = (pw == "0930")
-            with colB:
-                if st.button("로그아웃", key="admin_logout_btn"):
-                    st.session_state["IS_ADMIN"] = False
-        
-            is_admin = bool(st.session_state["IS_ADMIN"])
-            if not is_admin:
-                st.info("관리자 기능(저장/삭제)은 비밀번호 인증 후 사용 가능해요.")
-                return
+        # 🔐 운영자 인증 (비밀번호: 0930)
+        if "IS_ADMIN" not in st.session_state:
+            st.session_state["IS_ADMIN"] = False
 
-        
+        st.markdown("### 🔐 운영자 인증")
+        pw = st.text_input("관리자 비밀번호", type="password", key="admin_pw_input")
+
+        colA, colB = st.columns(2)
+        with colA:
+            if st.button("로그인", key="admin_login_btn"):
+                st.session_state["IS_ADMIN"] = (pw == "0930")
+        with colB:
+            if st.button("로그아웃", key="admin_logout_btn"):
+                st.session_state["IS_ADMIN"] = False
+
+        is_admin = bool(st.session_state["IS_ADMIN"])
+        if not is_admin:
+            st.info("관리자 기능(저장/삭제)은 비밀번호 인증 후 사용 가능해요.")
+            return
+
         last = st.session_state.get("LAST_CALC_OPTS", {})
         if not last:
             st.info("최근 계산 옵션이 없어요. 탭1 또는 탭2에서 먼저 '계산'을 한 번 실행해줘.")
@@ -147,10 +146,7 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party, 
                     energy_decrease_by_color=energy_decrease_by_color,
                 )
 
-                # ENERGY_LIMIT = 경계 회수 * (기준 파티 1사이클 총 MP)
                 energy_limit = float(threshold_cycles) * float(total_mp)
-
-                # ✅ 핵심: ref_vec 저장(거리/가중치 계산에 사용)
                 ref_vec = party_to_mp_share_vector(party)
 
                 store = get_limits_store()
@@ -158,13 +154,10 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party, 
                 store[boss].setdefault("profiles", [])
 
                 store[boss]["profiles"].append({
-                    # 판정에 직접 쓰는 핵심 3개
                     "energy_limit": float(energy_limit),
                     "ref_party": ref_party_text,
                     "ref_vec": ref_vec,
-
-                    # 나머지는 참고/관리용 메타
-                    "label": party_type_label,  # ✅ 분류로 저장하되 판정에는 사용 안 함
+                    "label": party_type_label,
                     "threshold_cycles": int(threshold_cycles),
                     "ref_total_mp": int(total_mp),
                     "ref_P": float(total_dmg_per_mp_sum),
@@ -174,7 +167,7 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party, 
                     "ref_energy_decrease_by_color": energy_decrease_by_color,
                 })
 
-                save_limits(store)  # ✅ JSON에 영구 저장 (모든 접속자 공유)
+                save_limits(store)
 
                 st.success(f"저장 완료! ENERGY_LIMIT = {energy_limit:,.0f}")
                 st.caption(f"- 기준 파티 1사이클 총 MP = {total_mp:,}")
@@ -193,11 +186,7 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party, 
         if profs:
             st.write(f"- 보스: **{boss}** / 저장된 프로필 수: **{len(profs)}개**")
 
-            # ----------------------------
-            # ✅ 프로필 1개 삭제 기능
-            # ----------------------------
             st.markdown("### 🗑 프로필 1개 삭제(관리자)")
-            # 내부 인덱스는 0-based, 표시만 1-based
             sel_idx = st.selectbox(
                 "삭제할 프로필 선택",
                 options=list(range(len(profs))),
@@ -220,7 +209,6 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party, 
                         st.error(str(e))
 
             st.markdown("---")
-            # 너무 길어지면 최신 10개만 보여주기
             show_n = min(10, len(profs))
             st.caption(f"최근 {show_n}개만 표시")
             for i, p in enumerate(profs[-show_n:], start=max(1, len(profs) - show_n + 1)):
