@@ -501,6 +501,22 @@ with tab2:
         )
 
     if st.button("파티 비교 실행"):
+        
+        party_type_options = [
+            "빨강(주로 비트 구성)",
+            "빨강(주로 인삼 구성)",
+            "파랑(눈설탕, 캡아 구성)",
+            "노랑(주로 스네 구성)",
+        ]
+    
+        judge_party_type_tab2 = st.selectbox(
+            "클리어 기준 파티유형(정규화 판정용)",
+            party_type_options,
+            index=3,
+            key="tab2_judge_party_type",
+        )
+
+        
         rows = []
         for line in party_texts.splitlines():
             if not line.strip():
@@ -531,6 +547,14 @@ with tab2:
                 if party5_on_cmp:
                     effective_boss_hp_cmp *= 5.0
 
+                judge_cols = judge_clear_for_table(
+                    boss="사마귀",
+                    boss_hp=effective_boss_hp_cmp,
+                    P=total_dmg_per_mp_sum,
+                    party_type=judge_party_type_tab2,
+                )
+
+                
                 cycles = math.ceil(effective_boss_hp_cmp / total_dmg) if total_dmg > 0 else 0
                 effective_total_dmg_async = total_dmg * dps_ratio_async
                 cycles_with_energy_async = math.ceil(effective_boss_hp_cmp / effective_total_dmg_async) if effective_total_dmg_async > 0 else 0
