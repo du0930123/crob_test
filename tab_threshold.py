@@ -193,7 +193,7 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party, 
             sel_idx = st.selectbox(
                 "삭제할 프로필 선택",
                 options=list(range(len(profs))),
-                format_func=lambda i: f"{i+1}. [{profs[i].get('label','-')}] ENERGY_LIMIT={float(profs[i].get('energy_limit',0)):,.0f} | {profs[i].get('ref_party','')}",
+                format_func=lambda i: f"{i+1}. [{profs[i].get('label','-')}] ref_required_norm={float(profs[i].get('ref_required_norm',0)):,.2f} | {profs[i].get('ref_party','')}",
                 key=f"del_profile_idx_{boss}"
             )
 
