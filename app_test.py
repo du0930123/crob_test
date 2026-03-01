@@ -84,10 +84,42 @@ CHARACTER_DB: Dict[str, Character] = {
     "뱀파": Character("뱀파", 4462500, 4, 0.0, 0.0, 340, color="빨강"),
 }
 
+# ============================
+# 캐릭터 별칭 매핑
+# ============================
+
+CHARACTER_ALIAS: Dict[str, str] = {
+    # 파랑
+    "눈설": "눈설탕",
+    "눈설탕": "눈설탕",
+    "눈": "눈설탕",
+
+    "캡아": "캡틴아이스",
+    "캡틴": "캡틴아이스",
+    "캡틴아이스": "캡틴아이스",
+    "캡": "캡틴아이스",
+
+    # 노랑
+    "스네": "스네이크",
+    "스네이크": "스네이크",
+    "스":"스네이크",
+
+    # 빨강
+    "인삼": "인삼",
+    "인":"인삼",
+    "비트": "비트",
+    "비":"비트",
+    "레판": "레판",
+    "레":"레판",
+    "뱀파": "뱀파",
+    "뱀":"뱀파",
+}
+
 
 # ============================
 # 파티 파싱
 # ============================
+
 def build_party_from_text(text: str) -> List[Character]:
     tokens = text.split()
     if len(tokens) % 2 != 0:
@@ -95,11 +127,19 @@ def build_party_from_text(text: str) -> List[Character]:
 
     party: List[Character] = []
     for i in range(0, len(tokens), 2):
-        name = tokens[i]
+        raw_name = tokens[i]
         cnt = int(tokens[i + 1])
 
+        # ✅ 별칭을 정식 이름으로 변환
+        if raw_name not in CHARACTER_ALIAS:
+            raise KeyError(
+                f"알 수 없는 캐릭터: {raw_name} / 사용 가능: {', '.join(CHARACTER_ALIAS.keys())}"
+            )
+
+        name = CHARACTER_ALIAS[raw_name]
+
         if name not in CHARACTER_DB:
-            raise KeyError(f"알 수 없는 캐릭터: {name} / 사용 가능: {', '.join(CHARACTER_DB.keys())}")
+            raise KeyError(f"DB에 없는 캐릭터: {name}")
 
         if cnt <= 0:
             continue
