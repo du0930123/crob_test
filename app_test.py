@@ -516,20 +516,14 @@ with tab2:
 
     if st.button("파티 비교 실행"):
         
-        party_type_options = [
-            "빨강(주로 비트 구성)",
-            "빨강(주로 인삼 구성)",
-            "파랑(눈설탕, 캡아 구성)",
-            "노랑(주로 스네 구성)",
-        ]
-    
-        judge_party_type_tab2 = st.selectbox(
-            "클리어 기준 파티유형(정규화 판정용)",
-            party_type_options,
-            index=3,
-            key="tab2_judge_party_type",
+        judge_cols = judge_clear_for_table(
+            boss="사마귀",
+            boss_hp=effective_boss_hp_cmp,
+            P=total_dmg_per_mp_sum,
+            party=party,           # ✅ 변경
+            k_profiles=5,
+            weight_power=1.0,
         )
-
         
         rows = []
         for line in party_texts.splitlines():
@@ -585,6 +579,9 @@ with tab2:
                     "총 스킬에너지 소모(1사이클)": int(total_mp),
                     "총 스킬에너지 소모(처치)": int(cycles * total_mp),
                     "(에너지감소 반영) 총 스킬에너지 소모(처치)": int(cycles_with_energy_async * total_mp),
+                
+                    # ✅ 정규화 판정 컬럼들(테이블에 추가)
+                    **judge_cols,
                 })
 
             except Exception as e:
