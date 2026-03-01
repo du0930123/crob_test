@@ -138,7 +138,7 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party, 
                 stone_crit_buff_pct = float(last.get("stone_crit_buff_pct", 0.0))
                 weakness_bonus_by_color = dict(last.get("weakness_bonus_by_color", {}) or {})
                 energy_decrease_by_color = dict(last.get("energy_decrease_by_color", {}) or {})
-
+                # 기준 파티 계산
                 total_dmg, total_dmg_per_mp_sum, total_mp, _, _, _ = calculate_party(
                     party=party,
                     common_damage_buff=common_damage_buff_pct / 100.0,
@@ -146,31 +146,33 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party, 
                     weakness_bonus_by_color=weakness_bonus_by_color,
                     energy_decrease_by_color=energy_decrease_by_color,
                 )
-
-                energy_limit = float(threshold_cycles) * float(total_mp)
-                ref_vec = party_to_mp_share_vector(party)
-
+                
+                if total_dmg_per_mp_sum <= 0:
+                    raise ValueError("기준 파티의 P값이 0 이하입니다.")
+                
+                # 🔥 핵심 변경: 총 에너지 기준 제거
+                # threshold_cycles 동안 허용된 '정규화 필요에너지'를 저장
+                ref_required_norm = float(threshold_cycles) * (
+                    float(total_mp) / float(total_dmg_per_mp_sum)
+                )
+                
                 store = get_limits_store()
                 store.setdefault(boss, {})
                 store[boss].setdefault("profiles", [])
-
+                
                 store[boss]["profiles"].append({
-                    "energy_limit": float(energy_limit),
+                    "ref_required_norm": float(ref_required_norm),
                     "ref_party": ref_party_text,
                     "ref_vec": ref_vec,
                     "label": party_type_label,
                     "threshold_cycles": int(threshold_cycles),
                     "ref_total_mp": int(total_mp),
                     "ref_P": float(total_dmg_per_mp_sum),
-                    "ref_common_damage_buff_pct": common_damage_buff_pct,
-                    "ref_stone_crit_buff_pct": stone_crit_buff_pct,
-                    "ref_weakness_bonus_by_color": weakness_bonus_by_color,
-                    "ref_energy_decrease_by_color": energy_decrease_by_color,
                 })
-
+                
                 save_limits(store)
-
-                st.success(f"저장 완료! ENERGY_LIMIT = {energy_limit:,.0f}")
+                
+                st.success(f"저장 완료! (정규화 기준값 = {ref_required_norm:,.2f})")
                 st.caption(f"- 기준 파티 1사이클 총 MP = {total_mp:,}")
                 st.caption(f"- 기준 파티 P(Σ(dmg/eff_mp)) = {total_dmg_per_mp_sum:,.2f}")
 
