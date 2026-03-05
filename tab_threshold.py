@@ -81,6 +81,12 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party, 
             st.info("관리자 기능(저장/삭제)은 비밀번호 인증 후 사용 가능해요.")
             return
 
+        if st.button("🔄 GitHub에서 기준 다시 불러오기", key=f"reload_limits_{boss}"):
+            from boss_limits_store import load_limits
+            load_limits()
+            st.success("GitHub 기준으로 세션을 갱신했어.")
+            st.rerun()
+
 
         st.markdown("### 🔎 현재 세션 BOSS_LIMITS 상태")
         
