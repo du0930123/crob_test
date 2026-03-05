@@ -2,66 +2,24 @@
   "두억시니": {
     "profiles": [
       {
-        "boss_hp_est": 18256002207.300003,
-        "label": "빨강(주로 비트 구성)",
-        "ref_P": 585128.275875,
+        "boss_hp_est": 21608724075.000004,
+        "label": "노랑(주로 스네 구성)",
+        "ref_P": 712195.6298076924,
         "ref_common_damage_buff_pct": 30.0,
         "ref_energy_decrease_by_color": {},
-        "ref_party": "비트 3 캡틴아이스 1 레판 1",
-        "ref_required_norm": 31200.000000000004,
-        "ref_stone_crit_buff_pct": 56.0,
-        "ref_total_dmg": 234051310.35000002,
-        "ref_total_mp": 2000,
-        "ref_vec": {
-          "레판": 0.2,
-          "비트": 0.6,
-          "캡틴아이스": 0.2
-        },
-        "ref_weakness_bonus_by_color": {
-          "노랑": 0.0
-        },
-        "threshold_cycles": 78
-      },
-      {
-        "boss_hp_est": 14857254555.000002,
-        "label": "파랑(눈설탕, 캡아 구성)",
-        "ref_P": 541506.8442567568,
-        "ref_common_damage_buff_pct": 30.0,
-        "ref_energy_decrease_by_color": {},
-        "ref_party": "눈설탕 4 캡틴아이스 1",
-        "ref_required_norm": 27436.87307478499,
-        "ref_stone_crit_buff_pct": 56.0,
-        "ref_total_dmg": 203524035.00000003,
-        "ref_total_mp": 1880,
-        "ref_vec": {
-          "눈설탕": 0.7872340425531915,
-          "캡틴아이스": 0.2127659574468085
-        },
-        "ref_weakness_bonus_by_color": {
-          "노랑": 0.0
-        },
-        "threshold_cycles": 73
-      },
-      {
-        "boss_hp_est": 25073288856.000004,
-        "label": "빨강(주로 비트 구성)",
-        "ref_P": 814067.8200000002,
-        "ref_common_damage_buff_pct": 38.0,
-        "ref_energy_decrease_by_color": {},
-        "ref_party": "비트 4 레판 1",
-        "ref_required_norm": 30799.999999999996,
+        "ref_party": "스네이크 5 캡틴아이스 1",
+        "ref_required_norm": 30340.995044907548,
         "ref_stone_crit_buff_pct": 0.0,
-        "ref_total_dmg": 325627128.00000006,
-        "ref_total_mp": 2000,
+        "ref_total_dmg": 198245175.00000003,
+        "ref_total_mp": 1700,
         "ref_vec": {
-          "레판": 0.2,
-          "비트": 0.8
+          "스네이크": 0.7647058823529411,
+          "캡틴아이스": 0.23529411764705882
         },
         "ref_weakness_bonus_by_color": {
-          "노랑": 0.0,
-          "빨강": 0.48
+          "노랑": 0.0
         },
-        "threshold_cycles": 77
+        "threshold_cycles": 109
       }
     ]
   }
