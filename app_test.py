@@ -636,17 +636,6 @@ with tab2:
             "stone_crit_buff_pct": float(stone_crit_buff_pct_cmp),
         }
 
-    # ✅ 원하는 순간에만 PIN
-    if admin_mode:
-        colP1, colP2 = st.columns(2)
-        with colP1:
-            if st.button("📌 (비교 옵션) 탭3 기준으로 고정(PIN)", key="pin_from_tab2"):
-                st.session_state["PINNED_CALC_OPTS"] = dict(st.session_state["LAST_CALC_OPTS"])
-        with colP2:
-            if st.button("🧹 PIN 해제", key="unpin_from_tab2"):
-                st.session_state["PINNED_CALC_OPTS"] = None
-
-
         rows = []
         for line in party_texts.splitlines():
             if not line.strip():
