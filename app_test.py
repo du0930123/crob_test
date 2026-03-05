@@ -454,17 +454,7 @@ with tab1:
                 "stone_crit_buff_pct": float(stone_crit_buff_pct),
             }
             
-            if admin_mode:
-                colP1, colP2 = st.columns(2)
-                with colP1:
-                    if st.button("📌 이 옵션을 탭3 기준으로 고정(PIN)", key="pin_from_tab1"):
-                        st.session_state["PINNED_CALC_OPTS"] = dict(st.session_state["LAST_CALC_OPTS"])
-                with colP2:
-                    if st.button("🧹 PIN 해제", key="unpin_from_tab1"):
-                        st.session_state["PINNED_CALC_OPTS"] = None
 
-
-            
             st.subheader("적용 요약")
             if weakness_bonus_by_color:
                 pretty = ", ".join([f"{k}(+30% 고정 + {v*100:+.0f}%)" for k, v in weakness_bonus_by_color.items()])
