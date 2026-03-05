@@ -4,7 +4,8 @@ from dataclasses import dataclass
 from typing import Dict, List
 from clear_judge import render_clear_judge_box, judge_clear_for_table
 from tab_threshold import render_threshold_tab
-
+from boss_limits_store import load_limits
+load_limits()
 
     
 # ============================
