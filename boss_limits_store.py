@@ -1,14 +1,18 @@
+import base64
 import json
-import os
+import urllib.request
+import urllib.error
 import streamlit as st
-from typing import Dict, Any
+from typing import Dict, Any, Optional, Tuple
 
-DEFAULT_PATH = "boss_limits.json"
+DEFAULT_PATH = "boss_limits.json"  # 로컬 fallback용(실제 SSOT는 GitHub)
 
 
 def _ensure_session():
     if "BOSS_LIMITS" not in st.session_state:
         st.session_state["BOSS_LIMITS"] = {}
+    if "BOSS_LIMITS_SHA" not in st.session_state:
+        st.session_state["BOSS_LIMITS_SHA"] = None
 
 
 def _migrate_limits_store(store: Dict[str, Any]) -> Dict[str, Any]:
@@ -38,8 +42,7 @@ def _migrate_limits_store(store: Dict[str, Any]) -> Dict[str, Any]:
                 # (a) ref_vec 보정
                 ref_vec = p.get("ref_vec", None)
                 if not isinstance(ref_vec, dict):
-                    # 구버전에서 없었을 수 있으니 빈 dict로 둠(이 경우 clear_judge에서 무효 처리됨)
-                    p["ref_vec"] = {}  
+                    p["ref_vec"] = {}
 
                 # (b) limit_norm -> ref_required_norm
                 if p.get("ref_required_norm", None) is None:
@@ -49,20 +52,13 @@ def _migrate_limits_store(store: Dict[str, Any]) -> Dict[str, Any]:
                         except Exception:
                             pass
 
-                # (c) 혹시 energy_limit만 있는 구버전 profiles가 남아있다면:
-                #     지금 너의 로직은 ref_required_norm을 요구하므로, energy_limit은 참고용으로만 남김
-                #     (여기서 변환은 불가능: boss_hp 정보가 없으면 boss_hp/P 한계로 못 바꿈)
-                #     -> 그대로 두되 ref_required_norm이 없으면 무효로 남는다.
-
                 new_profs.append(p)
 
             boss_pack["profiles"] = new_profs
             store[boss] = boss_pack
             continue
 
-        # 2) profiles가 없는 "아주 구 구조" (예: store[boss][party_type] = {...}) 를 profiles로 승격
-        #    단, 여기서도 ref_required_norm을 만들려면 limit_norm이 있어야 함.
-        #    energy_limit만 있으면 변환 불가(위와 동일 이유).
+        # 2) profiles가 없는 구 구조를 profiles로 승격
         new_profiles = []
         for k, v in list(boss_pack.items()):
             if k == "profiles":
@@ -70,7 +66,6 @@ def _migrate_limits_store(store: Dict[str, Any]) -> Dict[str, Any]:
             if not isinstance(v, dict):
                 continue
 
-            # party_type별 dict에서 limit_norm이 있으면 ref_required_norm으로 승격
             if v.get("limit_norm", None) is not None:
                 try:
                     new_profiles.append({
@@ -82,8 +77,6 @@ def _migrate_limits_store(store: Dict[str, Any]) -> Dict[str, Any]:
                     })
                 except Exception:
                     pass
-            # energy_limit만 있는 케이스는 그대로 두거나 버릴지 선택인데,
-            # 여기서는 "그대로 두면 혼선"이라 profiles로는 올리지 않음.
 
         if new_profiles:
             store[boss] = {"profiles": new_profiles}
@@ -91,39 +84,118 @@ def _migrate_limits_store(store: Dict[str, Any]) -> Dict[str, Any]:
     return store
 
 
-def load_limits(path: str = DEFAULT_PATH) -> Dict[str, Any]:
+# ----------------------------
+# GitHub Contents API helpers
+# ----------------------------
+def _gh_headers() -> Dict[str, str]:
+    token = st.secrets["GITHUB_TOKEN"]
+    return {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "User-Agent": "streamlit-app",
+    }
+
+
+def _gh_info() -> Tuple[str, str, str]:
+    owner = st.secrets["GITHUB_OWNER"]
+    repo = st.secrets["GITHUB_REPO"]
+    path = st.secrets.get("GITHUB_PATH", DEFAULT_PATH)
+    return owner, repo, path
+
+
+def _gh_get_file_json() -> Tuple[Dict[str, Any], Optional[str]]:
+    """GitHub에서 JSON 읽기. 반환: (store, sha). 파일 없으면 ({}, None)"""
+    owner, repo, path = _gh_info()
+    url = f"https://api.github.com/repos/{owner}/{repo}/contents/{path}"
+
+    req = urllib.request.Request(url, headers=_gh_headers(), method="GET")
+    try:
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+        content_b64 = data.get("content", "") or ""
+        sha = data.get("sha", None)
+
+        if not content_b64:
+            return {}, sha
+
+        raw = base64.b64decode(content_b64).decode("utf-8")
+        store = json.loads(raw) or {}
+        return store, sha
+
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return {}, None
+        raise
+
+
+def _gh_put_file_json(store: Dict[str, Any], sha: Optional[str], message: str) -> str:
+    """GitHub에 JSON 생성/업데이트. 반환: new sha"""
+    owner, repo, path = _gh_info()
+    url = f"https://api.github.com/repos/{owner}/{repo}/contents/{path}"
+
+    content = json.dumps(store, ensure_ascii=False, indent=2, sort_keys=True).encode("utf-8")
+    payload: Dict[str, Any] = {
+        "message": message,
+        "content": base64.b64encode(content).decode("utf-8"),
+    }
+    if sha:
+        payload["sha"] = sha
+
+    body = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(url, headers=_gh_headers(), data=body, method="PUT")
+    with urllib.request.urlopen(req, timeout=20) as resp:
+        out = json.loads(resp.read().decode("utf-8"))
+    return out["content"]["sha"]
+
+
+# ----------------------------
+# Public API: load/save/get
+# ----------------------------
+def load_limits() -> Dict[str, Any]:
+    """GitHub에서 로드하여 세션에 반영"""
     _ensure_session()
-    if os.path.exists(path):
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                raw = json.load(f) or {}
-                raw = _migrate_limits_store(raw)  # ✅ 마이그레이션
-                st.session_state["BOSS_LIMITS"] = raw
-        except Exception:
-            st.session_state["BOSS_LIMITS"] = {}
-    else:
-        st.session_state["BOSS_LIMITS"] = {}
-        # 파일도 하나 만들어둠(선택)
-        try:
-            with open(path, "w", encoding="utf-8") as f:
-                json.dump({}, f, ensure_ascii=False, indent=2)
-        except Exception:
-            pass
-
-    return st.session_state["BOSS_LIMITS"]
+    store, sha = _gh_get_file_json()
+    store = _migrate_limits_store(store)
+    st.session_state["BOSS_LIMITS"] = store
+    st.session_state["BOSS_LIMITS_SHA"] = sha
+    return store
 
 
-def save_limits(store: Dict[str, Any], path: str = DEFAULT_PATH) -> None:
-    # 저장 직전에도 한 번 정리(선택이지만 안전)
+def save_limits(store: Dict[str, Any]) -> None:
+    """GitHub에 저장하고 sha 갱신"""
+    _ensure_session()
     store = _migrate_limits_store(store)
 
-    tmp = f"{path}.tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(store, f, ensure_ascii=False, indent=2, sort_keys=True)
-    os.replace(tmp, path)
+    # sha가 세션에 없으면 최신 sha부터 다시 가져옴
+    sha = st.session_state.get("BOSS_LIMITS_SHA", None)
+    if sha is None:
+        _, sha = _gh_get_file_json()
+
+    try:
+        new_sha = _gh_put_file_json(
+            store=store,
+            sha=sha,
+            message="Update boss_limits.json via Streamlit admin"
+        )
+    except urllib.error.HTTPError as e:
+        # sha 충돌(409) 같은 케이스 대비: 최신 sha로 재시도 1회
+        if getattr(e, "code", None) in (409, 422):
+            _, sha2 = _gh_get_file_json()
+            new_sha = _gh_put_file_json(
+                store=store,
+                sha=sha2,
+                message="Update boss_limits.json via Streamlit admin (retry)"
+            )
+        else:
+            raise
+
+    st.session_state["BOSS_LIMITS"] = store
+    st.session_state["BOSS_LIMITS_SHA"] = new_sha
 
 
-def get_limits_store(path: str = DEFAULT_PATH) -> Dict[str, Any]:
+def get_limits_store() -> Dict[str, Any]:
+    """세션에 없으면 GitHub에서 로드"""
     if "BOSS_LIMITS" not in st.session_state:
-        load_limits(path)
+        load_limits()
     return st.session_state["BOSS_LIMITS"]
