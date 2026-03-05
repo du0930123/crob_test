@@ -290,6 +290,10 @@ admin_flag = str(params.get("admin", "0")).strip().lower() in ["1", "true", "yes
 if "LAST_CALC_OPTS" not in st.session_state:
     st.session_state["LAST_CALC_OPTS"] = {}
 
+# ✅ 추가: 탭3에서 고정으로 쓸 옵션
+if "PINNED_CALC_OPTS" not in st.session_state:
+    st.session_state["PINNED_CALC_OPTS"] = None
+
 # ✅ 관리자 인증 상태(세션별)
 if "ADMIN_AUTH" not in st.session_state:
     st.session_state["ADMIN_AUTH"] = False
@@ -449,6 +453,17 @@ with tab1:
                 "common_damage_buff_pct": float(common_damage_buff_pct),
                 "stone_crit_buff_pct": float(stone_crit_buff_pct),
             }
+            
+            if admin_mode:
+                colP1, colP2 = st.columns(2)
+                with colP1:
+                    if st.button("📌 이 옵션을 탭3 기준으로 고정(PIN)", key="pin_from_tab1"):
+                        st.session_state["PINNED_CALC_OPTS"] = dict(st.session_state["LAST_CALC_OPTS"])
+                with colP2:
+                    if st.button("🧹 PIN 해제", key="unpin_from_tab1"):
+                        st.session_state["PINNED_CALC_OPTS"] = None
+
+
             
             st.subheader("적용 요약")
             if weakness_bonus_by_color:
@@ -629,6 +644,18 @@ with tab2:
             "common_damage_buff_pct": float(common_damage_buff_pct_cmp),
             "stone_crit_buff_pct": float(stone_crit_buff_pct_cmp),
         }
+
+        # ✅ 원하는 순간에만 PIN
+        if admin_mode:
+            colP1, colP2 = st.columns(2)
+            with colP1:
+                if st.button("📌 (비교 옵션) 탭3 기준으로 고정(PIN)", key="pin_from_tab2"):
+                    st.session_state["PINNED_CALC_OPTS"] = dict(st.session_state["LAST_CALC_OPTS"])
+            with colP2:
+                if st.button("🧹 PIN 해제", key="unpin_from_tab2"):
+                    st.session_state["PINNED_CALC_OPTS"] = Non
+
+
         
         rows = []
         for line in party_texts.splitlines():
