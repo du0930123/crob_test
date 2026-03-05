@@ -81,18 +81,47 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party, 
             st.info("관리자 기능(저장/삭제)은 비밀번호 인증 후 사용 가능해요.")
             return
 
-        pinned = st.session_state.get("PINNED_CALC_OPTS", None)
-        last = st.session_state.get("LAST_CALC_OPTS", {})
-        
-        use_opts = pinned or last or {}
-        if not use_opts:
-            st.info("최근 계산 옵션이 없어요. 탭1/2에서 계산을 한 번 실행해줘.")
-            return
+        st.markdown("### ⚙️ (탭3 전용) 기준 계산 옵션 입력")
+        st.caption("탭1/2 계산 없이도 여기서 옵션을 직접 정해서 기준 프로필을 저장할 수 있어요.")
 
-    
-        if not last:
-            st.info("최근 계산 옵션이 없어요. 탭1 또는 탭2에서 먼저 '계산'을 한 번 실행해줘.")
-            return
+        colO1, colO2 = st.columns(2)
+        with colO1:
+            common_damage_buff_pct = st.number_input(
+                "공통 피해증가율(%)",
+                min_value=0.0, max_value=1000.0, value=0.0, step=1.0,
+                key=f"tab3_common_{boss}"
+            )
+        with colO2:
+            stone_crit_buff_pct = st.number_input(
+                "돌옵션 : 치명타 피해 증가율(%)",
+                min_value=0.0, max_value=1000.0, value=0.0, step=1.0,
+                key=f"tab3_crit_{boss}"
+            )
+
+        st.markdown("#### 약점 색별 조건부 피해증가율 / 에너지획득량감소(%)")
+        weakness_bonus_by_color: Dict[str, float] = {}
+        energy_decrease_by_color: Dict[str, float] = {}
+
+        for wc in COLOR_OPTIONS:
+            with st.expander(f"{wc} 옵션", expanded=False):
+                w_on = st.checkbox(f"{wc} 약점 조건부 피해증가율 사용", key=f"tab3_w_on_{boss}_{wc}")
+                if w_on:
+                    w_pct = st.number_input(
+                        f"{wc} 피해증감율(%)",
+                        min_value=-300.0, max_value=300.0, value=0.0, step=1.0,
+                        key=f"tab3_w_pct_{boss}_{wc}"
+                    )
+                    weakness_bonus_by_color[wc] = float(w_pct) / 100.0
+
+                e_on = st.checkbox(f"{wc} 에너지획득량감소 사용", key=f"tab3_e_on_{boss}_{wc}")
+                if e_on:
+                    e_pct = st.number_input(
+                        f"{wc} 에너지 획득량 감소(%)",
+                        min_value=0.0, max_value=300.0, value=0.0, step=1.0,
+                        key=f"tab3_e_pct_{boss}_{wc}"
+                    )
+                    energy_decrease_by_color[wc] = float(e_pct) / 100.0
+
 
 
         st.markdown("### 🔎 현재 세션 BOSS_LIMITS 상태")
@@ -173,11 +202,6 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party, 
             try:
                 party = build_party_from_text(ref_party_text)
 
-                # ✅ LAST_CALC_OPTS를 그대로 사용 (A안)
-                common_damage_buff_pct = float(use_opts.get("common_damage_buff_pct", 0.0))
-                stone_crit_buff_pct = float(use_opts.get("stone_crit_buff_pct", 0.0))
-                weakness_bonus_by_color = dict(use_opts.get("weakness_bonus_by_color", {}) or {})
-                energy_decrease_by_color = dict(use_opts.get("energy_decrease_by_color", {}) or {})
                 # 기준 파티 계산
                 total_dmg, total_dmg_per_mp_sum, total_mp, _, _, _ = calculate_party(
                     party=party,
