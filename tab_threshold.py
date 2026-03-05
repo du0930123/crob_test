@@ -81,7 +81,15 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party, 
             st.info("관리자 기능(저장/삭제)은 비밀번호 인증 후 사용 가능해요.")
             return
 
+        pinned = st.session_state.get("PINNED_CALC_OPTS", None)
         last = st.session_state.get("LAST_CALC_OPTS", {})
+        
+        use_opts = pinned or last or {}
+        if not use_opts:
+            st.info("최근 계산 옵션이 없어요. 탭1/2에서 계산을 한 번 실행해줘.")
+            return
+
+    
         if not last:
             st.info("최근 계산 옵션이 없어요. 탭1 또는 탭2에서 먼저 '계산'을 한 번 실행해줘.")
             return
@@ -166,10 +174,10 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party, 
                 party = build_party_from_text(ref_party_text)
 
                 # ✅ LAST_CALC_OPTS를 그대로 사용 (A안)
-                common_damage_buff_pct = float(last.get("common_damage_buff_pct", 0.0))
-                stone_crit_buff_pct = float(last.get("stone_crit_buff_pct", 0.0))
-                weakness_bonus_by_color = dict(last.get("weakness_bonus_by_color", {}) or {})
-                energy_decrease_by_color = dict(last.get("energy_decrease_by_color", {}) or {})
+                common_damage_buff_pct = float(use_opts.get("common_damage_buff_pct", 0.0))
+                stone_crit_buff_pct = float(use_opts.get("stone_crit_buff_pct", 0.0))
+                weakness_bonus_by_color = dict(use_opts.get("weakness_bonus_by_color", {}) or {})
+                energy_decrease_by_color = dict(use_opts.get("energy_decrease_by_color", {}) or {})
                 # 기준 파티 계산
                 total_dmg, total_dmg_per_mp_sum, total_mp, _, _, _ = calculate_party(
                     party=party,
