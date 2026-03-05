@@ -81,15 +81,30 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party, 
             st.info("관리자 기능(저장/삭제)은 비밀번호 인증 후 사용 가능해요.")
             return
 
-        if st.button("🔄 GitHub에서 기준 다시 불러오기", key=f"reload_limits_{boss}"):
-            from boss_limits_store import load_limits
-            load_limits()
-            st.success("GitHub 기준으로 세션을 갱신했어.")
-            st.rerun()
 
-
+        # (관리자 인증 통과 후)
+        
         st.markdown("### 🔎 현재 세션 BOSS_LIMITS 상태")
         
+        colR1, colR2 = st.columns([1, 2])
+        with colR1:
+            if st.button("🔄 GitHub에서 기준 다시 불러오기", key=f"reload_limits_{boss}"):
+                try:
+                    from boss_limits_store import load_limits
+                    load_limits()  # GitHub -> session_state 갱신
+                    st.success("GitHub 기준으로 세션을 갱신했어.")
+        
+                    # ✅ 여기서 바로 다시 읽어서 즉시 반영된 값을 화면에 보여주기
+                    store = get_limits_store()
+                    st.caption(f"SHA: {st.session_state.get('BOSS_LIMITS_SHA')}")
+                    st.json(store)
+                except Exception as e:
+                    st.error(f"리로드 실패: {e}")
+        
+        with colR2:
+            st.caption(f"SHA: {st.session_state.get('BOSS_LIMITS_SHA')}")
+        
+        # ✅ 기본 표시 (버튼 안 눌러도 항상 현재값 보이게)
         store = get_limits_store()
         st.json(store)
 
