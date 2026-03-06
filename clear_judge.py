@@ -208,8 +208,8 @@ def render_clear_judge_box(
         text-align: center;
         line-height: 1.5;
     ">
-        부족 뜬다고 바로 포기하지 말 것!<br>
-        실제 컨트롤, 파티 숙련도, 보스 패턴 대응에 따라 결과가 달라질 수 있음
+        부족 뜬다고 못 깨는 거 아님<br>
+        아직 데이터 많이 부족하고, 겜속이나 빌드 등에 따라 달라질 수 있음
     </div>
     """,
     unsafe_allow_html=True
