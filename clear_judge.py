@@ -209,7 +209,7 @@ def render_clear_judge_box(
         line-height: 1.5;
     ">
         부족 뜬다고 못 깨는 거 아님<br>
-        아직 데이터 많이 부족하고, 겜속이나 빌드 등에 따라 달라질 수 있음
+        데이터 많이 부족하고, 겜속이나 빌드에 따라 달라질 수 있음
     </div>
     """,
     unsafe_allow_html=True
