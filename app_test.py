@@ -584,7 +584,7 @@ with tab2:
     with col1:
         common_damage_buff_pct_cmp = st.number_input(
             "공통 피해증가율(%) (ex : 유틸버프, 쿠주피)",
-            min_value=0.0, max_value=1000.0, value=42.0, step=1.0,
+            min_value=0.0, max_value=1000.0, value=30.0, step=1.0,
             key="cmp_common"
         )
     with col2:
