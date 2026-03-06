@@ -193,6 +193,28 @@ def render_clear_judge_box(
 
     st.write(f"- 필요 총 에너지(required_energy = boss_hp / P): **{required_energy:,.0f}**")
     st.write(f"- 기준 정규화 한계(ref_required_norm, 가중평균): **{ref_required_norm:,.0f}**")
+    st.markdown(
+    """
+    <div style="
+        margin-top: 12px;
+        margin-bottom: 12px;
+        padding: 18px 20px;
+        border-radius: 12px;
+        background-color: #fff3cd;
+        border: 2px solid #ffcc00;
+        color: #7a4b00;
+        font-size: 26px;
+        font-weight: 800;
+        text-align: center;
+        line-height: 1.5;
+    ">
+        부족 뜬다고 바로 포기하지 말 것!<br>
+        실제 컨트롤, 파티 숙련도, 보스 패턴 대응에 따라 결과가 달라질 수 있음
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+    
 
     if show_match_info and used:
         with st.expander("가중치로 사용된 기준 프로필(상위 매칭)", expanded=False):
