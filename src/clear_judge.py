@@ -165,18 +165,20 @@ def compute_energy_limit_weighted(
 def render_clear_judge_box(
     boss: str,
     boss_hp: float,
-    P: float,          # total_dmg_per_mp_sum
-    party,             # ✅ List[Character]
+    P: float,
+    party,
     key_prefix: str = "judge",
     show_match_info: bool = True,
     k_profiles: int = 5,
     weight_power: float = 1.0,
+    title: str = "정규화 클리어 판정",
+    show_notice: bool = True,   # ✅ 추가
 ):
     """
     party_type 선택 없음.
     보스 profiles 풀에서 자동으로 ENERGY_LIMIT(가중평균)을 계산.
     """
-    st.markdown("### ✅ 정규화 클리어 판정")
+    st.markdown(f"### ✅ {title}")
 
     ref_required_norm, used, err = compute_energy_limit_weighted(
         boss=boss,
@@ -191,29 +193,29 @@ def render_clear_judge_box(
 
     clear_ok, required_energy, margin_pct = judge_clear(boss_hp=boss_hp, P=P, ref_required_norm=ref_required_norm)
 
-    st.write(f"- 필요 총 에너지(required_energy = boss_hp / P): **{required_energy:,.0f}**")
-    st.write(f"- 기준 정규화 한계(ref_required_norm, 가중평균): **{ref_required_norm:,.0f}**")
-    st.markdown(
-    """
-    <div style="
-        margin-top: 12px;
-        margin-bottom: 12px;
-        padding: 18px 20px;
-        border-radius: 12px;
-        background-color: #fff3cd;
-        border: 2px solid #ffcc00;
-        color: #7a4b00;
-        font-size: 26px;
-        font-weight: 800;
-        text-align: center;
-        line-height: 1.5;
-    ">
-        부족 뜬다고 못 깨는 거 아님<br>
-        데이터 많이 부족하고, 겜속이나 빌드에 따라 달라질 수 있음
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+    if show_notice:
+        st.markdown(
+            """
+            <div style="
+                margin-top: 12px;
+                margin-bottom: 12px;
+                padding: 18px 20px;
+                border-radius: 12px;
+                background-color: #fff3cd;
+                border: 2px solid #ffcc00;
+                color: #7a4b00;
+                font-size: 26px;
+                font-weight: 800;
+                text-align: center;
+                line-height: 1.5;
+            ">
+                데이터 부족해서 조금 여유율 -떠도 해볼만함<br>
+                빌드, 겜속에따라 클리어여부 달라짐<br>
+                공주런 4페 끝까지가는걸 기준으로 잡은 상태
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
     
 
     if show_match_info and used:

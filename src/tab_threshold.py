@@ -2,48 +2,56 @@ import math
 import json
 import streamlit as st
 from typing import Dict, Any
-from boss_limits_store import get_limits_store, save_limits
+from src.boss_limits_store import get_limits_store, save_limits
 
 # ✅ clear_judge.py에 아래 함수가 있어야 함:
 # - party_to_mp_share_vector(party) -> Dict[str, float]
-from clear_judge import party_to_mp_share_vector
+from src.clear_judge import party_to_mp_share_vector
 
 
 def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party, admin_mode: bool = False):
     st.subheader("📌 파티사이클 클리어 여부 경계값 (정규화 적용)")
 
     # 보스 목록
-    BOSS_LIST = ["사마귀", "두억시니"]
+    BOSS_LIST = ["사마귀", "두억시니", "무쇠꾼", "크치뱀"]
 
-    # (표시용) 경험적 가이드: 파티유형 라벨별 텍스트
-    BOSS_GUIDE = {
-        "사마귀": {
-            "빨강(주로 비트 구성)": "105 ~ 110회",
-            "파랑(눈설탕, 캡아 구성)": "105 ~ 110회",
-            "노랑(주로 스네 구성)": "155회 내외",
-            "빨강(주로 인삼 구성)": "데이터 없음",
-        },
-        "두억시니": {
-            "빨강(주로 비트 구성)": "-",
-            "파랑(눈설탕, 캡아 구성)": "-",
-            "노랑(주로 스네 구성)": "-",
-            "빨강(주로 인삼 구성)": "-",
-        }
-    }
-
-    boss = st.selectbox("보스 선택", BOSS_LIST, index=0)
+    boss = st.selectbox("보스 선택", BOSS_LIST, index=3)
 
     st.markdown("### 조건")
-    conditions = [
-        "게임속도 증가 없음",
-        "보스 약화에 따른 딜량 증가를 반영하지 않음",
-        "빌드에 능숙한 5인 파티",
-        "4페를 어느정도 버틸 수 있을 만큼, 체력 여유가 있는 상태",
-    ]
+    
+    BOSS_CONDITIONS = {
+        "사마귀": [
+            "게임속도 증가 없음",
+            "보스 약화에 따른 딜량 증가를 반영하지 않음",
+            "빌드에 능숙한 5인 파티",
+            "4페를 어느정도 버틸 수 있을 만큼, 체력 여유가 있는 상태",
+        ],
+    
+        "두억시니": [
+            "게임속도 증가 없음",
+            "빌드에 능숙한 5인 파티",
+            "공주런 끝으로 4페 절반 수 있음",
+        ],
+    
+        "무쇠꾼": [
+            "게임속도 증가, 스킬에너지젤리 떨어짐, 모든점수 2배 옵션 반영하지 않음",
+            "스킬에 따라 다른 딜레이로 발생하는 빌드 유불리사항을 반영하지 않음",
+            "고렙돌 전용 빌드(얼기 실패 후 소화기먹고 3페 진입)에 능숙한 5인 파티",
+        ],
+    
+        "크치뱀": [
+            "게임속도 증가, 스킬에너지젤리 떨어짐, 모든점수 2배 옵션 반영하지 않음",
+            "스킬에 따라 다른 딜레이로 발생하는 빌드 유불리사항을 반영하지 않음",
+            "고렙돌 전용 빌드(발판 49개 맞추고 3페 진입)에 능숙한 5인 파티",
+        ],
+    }
+    
+    conditions = BOSS_CONDITIONS.get(boss, [])
+    
     for c in conditions:
         st.write(f"- {c}")
+    
     st.markdown("---")
-
     # ✅ party_type은 '표시/추천용 라벨'로만 유지 (판정에서는 무시)
     party_type_label = st.radio(
         "파티 유형 선택(표시/추천용)",
@@ -52,11 +60,6 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party, 
         index=0
     )
 
-    st.markdown("### 경험적 파티사이클 경계(표시용)")
-    guide = BOSS_GUIDE.get(boss, {})
-    cycle_text = guide.get(party_type_label, "데이터 없음")
-    st.write(f"- 기준: **{cycle_text}**")
-    st.markdown("---")
 
     # 🔒 관리자 영역
     if admin_mode:
@@ -136,6 +139,12 @@ def render_threshold_tab(COLOR_OPTIONS, build_party_from_text, calculate_party, 
         st.markdown("### ✅ 정규화 기준 저장(캘리브레이션)")
         st.caption("관리자가 기준 파티/경계 사이클을 저장하면 boss_limits.json에 반영되어 모든 접속자에게 동일하게 적용돼요.")
         st.caption("※ 저장은 party_type을 '분류로 쓰지 않고', 보스별 profiles 풀에 누적 저장됩니다. (판정 시 자동 거리/가중치로 사용)")
+
+        calc_opts = st.session_state.get("LAST_CALC_OPTS", {})
+        common_damage_buff_pct = float(calc_opts.get("common_damage_buff_pct", 0.0))
+        stone_crit_buff_pct = float(calc_opts.get("stone_crit_buff_pct", 0.0))
+        weakness_bonus_by_color = dict(calc_opts.get("weakness_bonus_by_color", {}))
+        energy_decrease_by_color = dict(calc_opts.get("energy_decrease_by_color", {}))
 
         # 기준 파티 기본값(라벨에 따라 추천만)
         default_party = {
