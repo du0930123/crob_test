@@ -209,9 +209,8 @@ def render_clear_judge_box(
                 text-align: center;
                 line-height: 1.5;
             ">
-                데이터 부족해서 조금 여유율 -떠도 해볼만함<br>
-                빌드, 겜속에따라 클리어여부 달라짐<br>
-                공주런 4페 끝까지가는걸 기준으로 잡은 상태
+                빌드, 겜속, 돌 색에따라 클리어여부 달라짐<br>
+                계산기를 너무 믿지는 말 것
             </div>
             """,
             unsafe_allow_html=True
